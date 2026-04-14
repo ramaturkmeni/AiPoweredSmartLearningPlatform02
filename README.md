@@ -1110,3 +1110,1323 @@ php artisan migrate
 ```
 
 > **ملاحظة:** نموذج `User` يأتي جاهزاً مع Laravel، فقط عدّل عليه بإضافة الحقول والعلاقات الجديدة.
+
+---
+
+## 🎮 شرح تفصيلي لوحدات التحكم (Controllers)
+
+هذا القسم يشرح كل ملف Controller بالتفصيل: دواله، المنطق البرمجي، والـ endpoints الخاصة به، مبني على قواعد البيانات المعرفة أعلاه.
+
+---
+
+### 1. 🔐 وحدة تحكم المصادقة — AuthController
+
+**الملف:** `app/Http/Controllers/AuthController.php`
+**الأمر:** `php artisan make:controller AuthController`
+
+#### الدوال المطلوبة:
+
+| الدالة | الوصف | Method | Route |
+|--------|-------|--------|-------|
+| `showRegisterForm()` | عرض صفحة التسجيل | GET | `/register` |
+| `register()` | معالجة بيانات التسجيل وحفظ المستخدم الجديد | POST | `/register` |
+| `showLoginForm()` | عرض صفحة تسجيل الدخول | GET | `/login` |
+| `login()` | التحقق من البيانات وتسجيل الدخول | POST | `/login` |
+| `logout()` | تسجيل الخروج وحذف الجلسة | POST | `/logout` |
+| `profile()` | عرض صفحة الملف الشخصي | GET | `/profile` |
+| `updateProfile()` | تحديث بيانات الملف الشخصي | PUT | `/profile` |
+
+#### الكود التفصيلي:
+
+```php
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\User;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rule;
+
+class AuthController extends Controller
+{
+    // ========== عرض صفحة التسجيل ==========
+    public function showRegisterForm()
+    {
+        return view('auth.register');
+    }
+
+    // ========== معالجة التسجيل ==========
+    public function register(Request $request)
+    {
+        // التحقق من صحة البيانات المدخلة
+        $validated = $request->validate([
+            'name'         => 'required|string|max:255',
+            'email'        => 'required|email|unique:users,email',
+            'password'     => 'required|string|min:8|confirmed',
+            'university'   => 'nullable|string|max:255',
+            'major'        => 'nullable|string|max:255',
+            'level'        => 'nullable|string|max:255',
+        ]);
+
+        // تشفير كلمة المرور
+        $validated['password'] = Hash::make($validated['password']);
+
+        // إنشاء المستخدم
+        $user = User::create($validated);
+
+        // تسجيل الدخول تلقائياً بعد التسجيل
+        Auth::login($user);
+
+        return redirect()->route('dashboard')->with('success', 'تم التسجيل بنجاح!');
+    }
+
+    // ========== عرض صفحة تسجيل الدخول ==========
+    public function showLoginForm()
+    {
+        return view('auth.login');
+    }
+
+    // ========== معالجة تسجيل الدخول ==========
+    public function login(Request $request)
+    {
+        $credentials = $request->validate([
+            'email'    => 'required|email',
+            'password' => 'required|string',
+        ]);
+
+        // محاولة تسجيل الدخول مع خيار "تذكرني"
+        if (Auth::attempt($credentials, $request->boolean('remember'))) {
+            $request->session()->regenerate(); // منع هجوم session fixation
+            return redirect()->intended(route('dashboard'));
+        }
+
+        return back()->withErrors([
+            'email' => 'بيانات الدخول غير صحيحة.',
+        ])->onlyInput('email');
+    }
+
+    // ========== تسجيل الخروج ==========
+    public function logout(Request $request)
+    {
+        Auth::logout();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+        return redirect()->route('login');
+    }
+
+    // ========== عرض الملف الشخصي ==========
+    public function profile()
+    {
+        return view('auth.profile', ['user' => Auth::user()]);
+    }
+
+    // ========== تحديث الملف الشخصي ==========
+    public function updateProfile(Request $request)
+    {
+        $user = Auth::user();
+
+        $validated = $request->validate([
+            'name'       => 'required|string|max:255',
+            'email'      => ['required', 'email', Rule::unique('users')->ignore($user->id)],
+            'university' => 'nullable|string|max:255',
+            'major'      => 'nullable|string|max:255',
+            'level'      => 'nullable|string|max:255',
+            'avatar'     => 'nullable|image|max:2048',
+        ]);
+
+        // رفع الصورة الشخصية إن وُجدت
+        if ($request->hasFile('avatar')) {
+            // حذف الصورة القديمة إن وجدت
+            if ($user->avatar) {
+                \Storage::delete($user->avatar);
+            }
+            $validated['avatar'] = $request->file('avatar')->store('avatars', 'public');
+        }
+
+        $user->update($validated);
+
+        return back()->with('success', 'تم تحديث الملف الشخصي بنجاح.');
+    }
+}
+```
+
+#### الـ Middleware المطلوب:
+```php
+// في Routes: تطبيق middleware auth على الصفحات المحمية
+Route::middleware('auth')->group(function () {
+    Route::get('/profile', [AuthController::class, 'profile'])->name('profile');
+    Route::put('/profile', [AuthController::class, 'updateProfile'])->name('profile.update');
+    Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+});
+```
+
+---
+
+### 2. 🏠 وحدة تحكم لوحة التحكم — DashboardController
+
+**الملف:** `app/Http/Controllers/DashboardController.php`
+**الأمر:** `php artisan make:controller DashboardController`
+
+#### الدوال المطلوبة:
+
+| الدالة | الوصف | Method | Route |
+|--------|-------|--------|-------|
+| `index()` | الصفحة الرئيسية — عرض ملخص شامل للطالب | GET | `/dashboard` |
+
+#### الكود التفصيلي:
+
+```php
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\Task;
+use App\Models\Summary;
+use App\Models\Exam;
+use App\Models\Notification;
+use App\Models\StudyPlan;
+use Illuminate\Support\Facades\Auth;
+
+class DashboardController extends Controller
+{
+    // ========== عرض لوحة التحكم الرئيسية ==========
+    public function index()
+    {
+        $user = Auth::user();
+
+        // 1. إحصائيات المهام
+        $totalTasks       = $user->tasks()->count();
+        $completedTasks   = $user->tasks()->where('status', 'completed')->count();
+        $pendingTasks     = $user->tasks()->where('status', 'pending')->count();
+        $progressPercent  = $totalTasks > 0 ? round(($completedTasks / $totalTasks) * 100) : 0;
+
+        // 2. الاختبارات القادمة (أقرب 5)
+        $upcomingExams = $user->exams()
+            ->where('exam_date', '>', now())
+            ->orderBy('exam_date')
+            ->take(5)
+            ->get();
+
+        // 3. هل نحن في وضع الأزمة؟ (اختبار خلال 3 أيام)
+        $crisisActive = $user->exams()
+            ->whereBetween('exam_date', [now(), now()->addDays(3)])
+            ->exists();
+
+        // 4. الخطة الدراسية الفعّالة
+        $activePlan = $user->studyPlans()->where('is_active', true)->first();
+
+        // 5. آخر الملخصات
+        $recentSummaries = $user->summaries()
+            ->latest()
+            ->take(5)
+            ->get();
+
+        // 6. التنبيهات غير المقروءة
+        $unreadNotifications = $user->notifications ?? collect();
+        // ملاحظة: لو استخدمت Laravel Notification الأصلي:
+        // $unreadNotifications = $user->unreadNotifications;
+
+        // 7. تفعيل وضع الأزمة تلقائياً إن لزم
+        if ($crisisActive && $activePlan && !$activePlan->is_crisis_mode) {
+            $activePlan->update(['is_crisis_mode' => true]);
+        }
+
+        return view('dashboard', compact(
+            'totalTasks',
+            'completedTasks',
+            'pendingTasks',
+            'progressPercent',
+            'upcomingExams',
+            'crisisActive',
+            'activePlan',
+            'recentSummaries',
+            'unreadNotifications'
+        ));
+    }
+}
+```
+
+#### ما تعرضه صفحة `dashboard.blade.php`:
+- **شريط تقدم** المهام (مثلاً: 65% مكتمل)
+- **بطاقات** بالاختبارات القادمة مع العد التنازلي
+- **تنبيه وضع الأزمة** 🔴 إن كان مفعّلاً
+- **الخطة الأسبوعية** الحالية
+- **آخر الملخصات** مع روابط سريعة
+- **عدد التنبيهات** غير المقروءة
+
+---
+
+### 3. 📝 وحدة تحكم التلخيص — SummaryController
+
+**الملف:** `app/Http/Controllers/SummaryController.php`
+**الأمر:** `php artisan make:controller SummaryController`
+
+#### الدوال المطلوبة:
+
+| الدالة | الوصف | Method | Route |
+|--------|-------|--------|-------|
+| `index()` | عرض قائمة كل الملخصات | GET | `/summaries` |
+| `create()` | عرض صفحة إنشاء ملخص جديد | GET | `/summaries/create` |
+| `store()` | حفظ الملخص الجديد (مع استدعاء AI) | POST | `/summaries` |
+| `show($id)` | عرض ملخص محدد | GET | `/summaries/{id}` |
+| `destroy($id)` | حذف ملخص | DELETE | `/summaries/{id}` |
+
+#### الكود التفصيلي:
+
+```php
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\Summary;
+use App\Services\AIService;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Smalot\PdfParser\Parser; // لت parsed PDF — يُثبّت via composer
+
+class SummaryController extends Controller
+{
+    protected $aiService;
+
+    public function __construct(AIService $aiService)
+    {
+        $this->aiService = $aiService;
+    }
+
+    // ========== عرض كل الملخصات ==========
+    public function index()
+    {
+        $summaries = Auth::user()->summaries()
+            ->with('subject')
+            ->latest()
+            ->paginate(10);
+
+        return view('summaries.index', compact('summaries'));
+    }
+
+    // ========== عرض صفحة إنشاء ملخص ==========
+    public function create()
+    {
+        $subjects = Auth::user()->subjects;
+        return view('summaries.create', compact('subjects'));
+    }
+
+    // ========== حفظ الملخص الجديد ==========
+    public function store(Request $request)
+    {
+        // التحقق من المدخلات
+        $validated = $request->validate([
+            'title'         => 'required|string|max:255',
+            'subject_id'    => 'nullable|exists:subjects,id',
+            'content'       => 'nullable|string',           // النص المُدخل يدوياً
+            'pdf_file'      => 'nullable|file|mimes:pdf|max:20480', // ملف PDF (حد 20MB)
+            'summary_level' => 'required|in:brief,medium,detailed',
+        ]);
+
+        $originalText = '';
+        $filePath = null;
+        $fileName = null;
+
+        // ===== استخراج النص من PDF إن وُجد =====
+        if ($request->hasFile('pdf_file')) {
+            $file = $request->file('pdf_file');
+            $fileName = $file->getClientOriginalName();
+            $filePath = $file->store('uploads/pdfs', 'public');
+
+            // استخراج النص باستخدام PdfParser
+            $parser = new Parser();
+            $pdf = $parser->parseFile($file->getRealPath());
+            $originalText = $pdf->getText();
+        }
+
+        // أو استخدام النص المُدخل يدوياً
+        if (empty($originalText) && $request->filled('content')) {
+            $originalText = $request->input('content');
+        }
+
+        // التأكد من وجود نص للتلخيص
+        if (empty(trim($originalText))) {
+            return back()->withErrors(['content' => 'يرجى إدخال نص أو رفع ملف PDF.'])->withInput();
+        }
+
+        // ===== استدعاء خدمة الذكاء الاصطناعي للتلخيص =====
+        $summaryText = $this->aiService->summarize($originalText, $validated['summary_level']);
+
+        // ===== حفظ الملخص في قاعدة البيانات =====
+        $summary = Summary::create([
+            'user_id'              => Auth::id(),
+            'subject_id'           => $validated['subject_id'],
+            'title'                => $validated['title'],
+            'original_text'        => $originalText,
+            'summary_text'         => $summaryText,
+            'summary_level'        => $validated['summary_level'],
+            'file_path'            => $filePath,
+            'file_name'            => $fileName,
+            'word_count_original'  => str_word_count($originalText),
+            'word_count_summary'   => str_word_count($summaryText),
+        ]);
+
+        return redirect()->route('summaries.show', $summary->id)
+            ->with('success', 'تم إنشاء الملخص بنجاح!');
+    }
+
+    // ========== عرض ملخص محدد ==========
+    public function show($id)
+    {
+        $summary = Summary::where('user_id', Auth::id())
+            ->where('id', $id)
+            ->with('subject')
+            ->firstOrFail();
+
+        // حساب نسبة التلخيص
+        $reductionPercent = $summary->word_count_original > 0
+            ? round((1 - $summary->word_count_summary / $summary->word_count_original) * 100)
+            : 0;
+
+        return view('summaries.show', compact('summary', 'reductionPercent'));
+    }
+
+    // ========== حذف ملخص ==========
+    public function destroy($id)
+    {
+        $summary = Summary::where('user_id', Auth::id())
+            ->where('id', $id)
+            ->firstOrFail();
+
+        // حذف ملف PDF من التخزين
+        if ($summary->file_path) {
+            \Storage::disk('public')->delete($summary->file_path);
+        }
+
+        $summary->delete();
+
+        return redirect()->route('summaries.index')
+            ->with('success', 'تم حذف الملخص بنجاح.');
+    }
+}
+```
+
+#### الحزم الإضافية المطلوبة:
+```bash
+# لاستخراج النص من PDF
+composer require smalot/pdfparser
+```
+
+---
+
+### 4. 🤖 وحدة تحكم المساعد الذكي — AssistantController
+
+**الملف:** `app/Http/Controllers/AssistantController.php`
+**الأمر:** `php artisan make:controller AssistantController`
+
+#### الدوال المطلوبة:
+
+| الدالة | الوصف | Method | Route |
+|--------|-------|--------|-------|
+| `index()` | عرض صفحة المحادثة | GET | `/assistant` |
+| `chat()` | إرسال رسالة واستلام رد AI | POST | `/assistant/chat` |
+| `history()` | عرض سجل المحادثات | GET | `/assistant/history` |
+| `generateQuiz()` | توليد أسئلة تدريبية | POST | `/assistant/generate-quiz` |
+
+#### الكود التفصيلي:
+
+```php
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\ChatMessage;
+use App\Services\AIService;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+
+class AssistantController extends Controller
+{
+    protected $aiService;
+
+    public function __construct(AIService $aiService)
+    {
+        $this->aiService = $aiService;
+    }
+
+    // ========== عرض صفحة المحادثة ==========
+    public function index(Request $request)
+    {
+        $subjectId = $request->query('subject_id');
+        $subjects = Auth::user()->subjects;
+
+        // جلب آخر 50 رسالة في المحادثة (أو لمادة محددة)
+        $messages = ChatMessage::where('user_id', Auth::id())
+            ->when($subjectId, fn($q) => $q->where('subject_id', $subjectId))
+            ->latest()
+            ->take(50)
+            ->get()
+            ->reverse()
+            ->values();
+
+        return view('assistant.index', compact('messages', 'subjects', 'subjectId'));
+    }
+
+    // ========== إرسال رسالة واستلام رد AI ==========
+    public function chat(Request $request)
+    {
+        $validated = $request->validate([
+            'message'    => 'required|string|max:5000',
+            'subject_id' => 'nullable|exists:subjects,id',
+        ]);
+
+        // حفظ رسالة المستخدم
+        ChatMessage::create([
+            'user_id'    => Auth::id(),
+            'subject_id' => $validated['subject_id'],
+            'role'       => 'user',
+            'message'    => $validated['message'],
+        ]);
+
+        // جلب آخر 10 رسائل كسياق للمحادثة
+        $chatHistory = ChatMessage::where('user_id', Auth::id())
+            ->when($validated['subject_id'], fn($q) => $q->where('subject_id', $validated['subject_id']))
+            ->latest()
+            ->take(10)
+            ->get()
+            ->reverse();
+
+        // استدعاء الذكاء الاصطناعي
+        $aiReply = $this->aiService->chat($chatHistory, $validated['message']);
+
+        // حفظ رد المساعد
+        ChatMessage::create([
+            'user_id'    => Auth::id(),
+            'subject_id' => $validated['subject_id'],
+            'role'       => 'assistant',
+            'message'    => $aiReply,
+        ]);
+
+        return response()->json([
+            'reply' => $aiReply,
+        ]);
+    }
+
+    // ========== عرض سجل المحادثات ==========
+    public function history(Request $request)
+    {
+        $conversations = ChatMessage::where('user_id', Auth::id())
+            ->selectRaw('subject_id, DATE(created_at) as date, COUNT(*) as message_count')
+            ->groupBy('subject_id', \DB::raw('DATE(created_at)'))
+            ->orderByDesc('date')
+            ->paginate(20);
+
+        return view('assistant.history', compact('conversations'));
+    }
+
+    // ========== توليد أسئلة تدريبية ==========
+    public function generateQuiz(Request $request)
+    {
+        $validated = $request->validate([
+            'subject_id'    => 'required|exists:subjects,id',
+            'topic'         => 'required|string|max:500',
+            'question_type' => 'required|in:multiple_choice,true_false,essay,mixed',
+            'count'         => 'required|integer|min:1|max:20',
+            'difficulty'    => 'required|in:easy,medium,hard',
+        ]);
+
+        $subject = Auth::user()->subjects()->findOrFail($validated['subject_id']);
+
+        // استدعاء AI لتوليد الأسئلة
+        $questions = $this->aiService->generateQuiz(
+            $subject->name,
+            $validated['topic'],
+            $validated['question_type'],
+            $validated['count'],
+            $validated['difficulty']
+        );
+
+        return response()->json([
+            'subject'   => $subject->name,
+            'questions' => $questions,
+        ]);
+    }
+}
+```
+
+---
+
+### 5. ✅ وحدة تحكم المهام — TaskController
+
+**الملف:** `app/Http/Controllers/TaskController.php`
+**الأمر:** `php artisan make:controller TaskController`
+
+#### الدوال المطلوبة:
+
+| الدالة | الوصف | Method | Route |
+|--------|-------|--------|-------|
+| `index()` | عرض قائمة المهام مع فلترة وترتيب | GET | `/tasks` |
+| `create()` | عرض صفحة إنشاء مهمة جديدة | GET | `/tasks/create` |
+| `store()` | حفظ المهمة الجديدة | POST | `/tasks` |
+| `show($id)` | عرض تفاصيل مهمة | GET | `/tasks/{id}` |
+| `edit($id)` | عرض صفحة تعديل مهمة | GET | `/tasks/{id}/edit` |
+| `update()` | تحديث المهمة | PUT/PATCH | `/tasks/{id}` |
+| `destroy($id)` | حذف مهمة | DELETE | `/tasks/{id}` |
+| `toggleStatus($id)` | تبديل حالة المهمة (مكتمل/غير مكتمل) | PATCH | `/tasks/{id}/toggle` |
+| `reorderPriorities()` | إعادة ترتيب الأولويات ذكياً | POST | `/tasks/reorder` |
+
+#### الكود التفصيلي:
+
+```php
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\Task;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+
+class TaskController extends Controller
+{
+    // ========== عرض كل المهام مع فلترة ==========
+    public function index(Request $request)
+    {
+        $query = Task::where('user_id', Auth::id())->with('subject');
+
+        // فلترة حسب الحالة
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        // فلترة حسب الأولوية
+        if ($request->filled('priority')) {
+            $query->where('priority', $request->priority);
+        }
+
+        // فلترة حسب المادة
+        if ($request->filled('subject_id')) {
+            $query->where('subject_id', $request->subject_id);
+        }
+
+        // فلترة: المهام المتأخرة
+        if ($request->boolean('overdue')) {
+            $query->where('due_date', '<', now())
+                  ->where('status', '!=', 'completed');
+        }
+
+        // ترتيب: الأقرب موعداً أولاً
+        $tasks = $query->orderByRaw("
+            CASE priority
+                WHEN 'urgent' THEN 1
+                WHEN 'high' THEN 2
+                WHEN 'medium' THEN 3
+                WHEN 'low' THEN 4
+            END
+        ")->orderBy('due_date', 'asc')->paginate(15);
+
+        $subjects = Auth::user()->subjects;
+
+        return view('tasks.index', compact('tasks', 'subjects'));
+    }
+
+    // ========== عرض صفحة إنشاء مهمة ==========
+    public function create()
+    {
+        $subjects = Auth::user()->subjects;
+        return view('tasks.create', compact('subjects'));
+    }
+
+    // ========== حفظ مهمة جديدة ==========
+    public function store(Request $request)
+    {
+        $validated = $request->validate([
+            'title'       => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'subject_id'  => 'nullable|exists:subjects,id',
+            'priority'    => 'required|in:low,medium,high,urgent',
+            'due_date'    => 'nullable|date|after:now',
+        ]);
+
+        $validated['user_id'] = Auth::id();
+        $validated['status'] = 'pending';
+
+        Task::create($validated);
+
+        return redirect()->route('tasks.index')
+            ->with('success', 'تم إنشاء المهمة بنجاح.');
+    }
+
+    // ========== عرض مهمة محددة ==========
+    public function show($id)
+    {
+        $task = Task::where('user_id', Auth::id())
+            ->where('id', $id)
+            ->with('subject')
+            ->firstOrFail();
+
+        return view('tasks.show', compact('task'));
+    }
+
+    // ========== عرض صفحة التعديل ==========
+    public function edit($id)
+    {
+        $task = Task::where('user_id', Auth::id())
+            ->where('id', $id)
+            ->firstOrFail();
+
+        $subjects = Auth::user()->subjects;
+        return view('tasks.edit', compact('task', 'subjects'));
+    }
+
+    // ========== تحديث مهمة ==========
+    public function update(Request $request, $id)
+    {
+        $task = Task::where('user_id', Auth::id())
+            ->where('id', $id)
+            ->firstOrFail();
+
+        $validated = $request->validate([
+            'title'       => 'required|string|max:255',
+            'description' => 'nullable|string',
+            'subject_id'  => 'nullable|exists:subjects,id',
+            'priority'    => 'required|in:low,medium,high,urgent',
+            'status'      => 'required|in:pending,in_progress,completed',
+            'due_date'    => 'nullable|date',
+        ]);
+
+        // إذا تم تحديد المهمة كمكتملة، سجّل وقت الإنجاز
+        if ($validated['status'] === 'completed' && $task->status !== 'completed') {
+            $validated['completed_at'] = now();
+        }
+
+        $task->update($validated);
+
+        return redirect()->route('tasks.index')
+            ->with('success', 'تم تحديث المهمة بنجاح.');
+    }
+
+    // ========== حذف مهمة ==========
+    public function destroy($id)
+    {
+        $task = Task::where('user_id', Auth::id())
+            ->where('id', $id)
+            ->firstOrFail();
+
+        $task->delete();
+
+        return redirect()->route('tasks.index')
+            ->with('success', 'تم حذف المهمة.');
+    }
+
+    // ========== تبديل حالة المهمة (AJAX) ==========
+    public function toggleStatus($id)
+    {
+        $task = Task::where('user_id', Auth::id())
+            ->where('id', $id)
+            ->firstOrFail();
+
+        if ($task->status === 'completed') {
+            $task->update([
+                'status'       => 'pending',
+                'completed_at' => null,
+            ]);
+        } else {
+            $task->update([
+                'status'       => 'completed',
+                'completed_at' => now(),
+            ]);
+        }
+
+        return response()->json([
+            'status'       => $task->status,
+            'completed_at' => $task->completed_at?->format('Y-m-d H:i'),
+        ]);
+    }
+
+    // ========== إعادة ترتيب الأولويات ذكياً ==========
+    public function reorderPriorities()
+    {
+        $tasks = Task::where('user_id', Auth::id())
+            ->where('status', '!=', 'completed')
+            ->get();
+
+        foreach ($tasks as $task) {
+            $newPriority = $this->calculateSmartPriority($task);
+            $task->update(['priority' => $newPriority]);
+        }
+
+        return redirect()->route('tasks.index')
+            ->with('success', 'تم إعادة ترتيب الأولويات بناءً على الموعد والأهمية.');
+    }
+
+    /**
+     * حساب الأولوية الذكية للمهمة
+     * كلما اقترب الموعد وزادت الأهمية، ارتفعت الأولوية
+     */
+    private function calculateSmartPriority(Task $task): string
+    {
+        if (!$task->due_date) return 'medium';
+
+        $daysLeft = now()->diffInDays($task->due_date, false);
+
+        if ($daysLeft < 0) return 'urgent';       // متأخر
+        if ($daysLeft <= 1) return 'urgent';       // غداً
+        if ($daysLeft <= 3) return 'high';         // خلال 3 أيام
+        if ($daysLeft <= 7) return 'medium';       // خلال أسبوع
+        return 'low';                              // أكثر من أسبوع
+    }
+}
+```
+
+---
+
+### 6. 📅 وحدة تحكم خطة الدراسة — ScheduleController
+
+**الملف:** `app/Http/Controllers/ScheduleController.php`
+**الأمر:** `php artisan make:controller ScheduleController`
+
+#### الدوال المطلوبة:
+
+| الدالة | الوصف | Method | Route |
+|--------|-------|--------|-------|
+| `index()` | عرض خطط الدراسة | GET | `/plans` |
+| `create()` | عرض صفحة إنشاء خطة | GET | `/plans/create` |
+| `store()` | حفظ خطة جديدة (بناءً على خوارزمية ذكية) | POST | `/plans` |
+| `show($id)` | عرض خطة محددة بالتفصيل | GET | `/plans/{id}` |
+| `destroy($id)` | حذف خطة | DELETE | `/plans/{id}` |
+| `activateCrisisMode()` | تفعيل وضع الأزمة يدوياً | POST | `/plans/crisis` |
+
+#### الكود التفصيلي:
+
+```php
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\StudyPlan;
+use App\Models\Subject;
+use App\Services\ScheduleGenerator;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+
+class ScheduleController extends Controller
+{
+    protected $scheduleGenerator;
+
+    public function __construct(ScheduleGenerator $scheduleGenerator)
+    {
+        $this->scheduleGenerator = $scheduleGenerator;
+    }
+
+    // ========== عرض كل الخطط ==========
+    public function index()
+    {
+        $plans = Auth::user()->studyPlans()
+            ->with('subjects')
+            ->latest()
+            ->paginate(10);
+
+        return view('plans.index', compact('plans'));
+    }
+
+    // ========== عرض صفحة إنشاء خطة ==========
+    public function create()
+    {
+        $subjects = Auth::user()->subjects;
+        $exams = Auth::user()->exams()
+            ->where('exam_date', '>', now())
+            ->orderBy('exam_date')
+            ->get();
+
+        return view('plans.create', compact('subjects', 'exams'));
+    }
+
+    // ========== إنشاء خطة دراسية ذكية ==========
+    public function store(Request $request)
+    {
+        $validated = $request->validate([
+            'name'              => 'required|string|max:255',
+            'start_date'        => 'required|date',
+            'end_date'          => 'required|date|after:start_date',
+            'subjects'          => 'required|array|min:1',
+            'subjects.*.id'     => 'required|exists:subjects,id',
+            'subjects.*.hours'  => 'required|numeric|min:0.5|max:12',
+            'daily_study_hours' => 'required|numeric|min:1|max:16',
+            'preferred_days'    => 'nullable|array',
+            'preferred_days.*'  => 'in:saturday,sunday,monday,tuesday,wednesday,thursday,friday',
+        ]);
+
+        // إنشاء الخطة
+        $plan = StudyPlan::create([
+            'user_id'            => Auth::id(),
+            'name'               => $validated['name'],
+            'start_date'         => $validated['start_date'],
+            'end_date'           => $validated['end_date'],
+            'total_study_hours'  => collect($validated['subjects'])->sum('hours'),
+        ]);
+
+        // استدعاء خوارزمية الجدولة الذكية
+        $schedule = $this->scheduleGenerator->generate(
+            $plan,
+            $validated['subjects'],
+            $validated['daily_study_hours'],
+            $validated['preferred_days'] ?? null
+        );
+
+        // ربط المواد بالخطة عبر الجدول الوسيط
+        foreach ($schedule as $entry) {
+            $plan->subjects()->attach($entry['subject_id'], [
+                'allocated_hours' => $entry['hours'],
+                'day_of_week'     => $entry['day'],
+                'start_time'      => $entry['start_time'] ?? null,
+                'end_time'        => $entry['end_time'] ?? null,
+            ]);
+        }
+
+        return redirect()->route('plans.show', $plan->id)
+            ->with('success', 'تم إنشاء خطة المذاكرة بنجاح!');
+    }
+
+    // ========== عرض خطة محددة ==========
+    public function show($id)
+    {
+        $plan = StudyPlan::where('user_id', Auth::id())
+            ->where('id', $id)
+            ->with('subjects')
+            ->firstOrFail();
+
+        // ترتيب المواد حسب الأيام
+        $scheduleByDay = $plan->subjects->groupBy('pivot.day_of_week');
+
+        return view('plans.show', compact('plan', 'scheduleByDay'));
+    }
+
+    // ========== حذف خطة ==========
+    public function destroy($id)
+    {
+        $plan = StudyPlan::where('user_id', Auth::id())
+            ->where('id', $id)
+            ->firstOrFail();
+
+        $plan->delete();
+
+        return redirect()->route('plans.index')
+            ->with('success', 'تم حذف الخطة.');
+    }
+
+    // ========== تفعيل وضع الأزمة ==========
+    public function activateCrisisMode(Request $request)
+    {
+        $validated = $request->validate([
+            'plan_id' => 'required|exists:study_plans,id',
+        ]);
+
+        $plan = StudyPlan::where('user_id', Auth::id())
+            ->where('id', $validated['plan_id'])
+            ->firstOrFail();
+
+        // تفعيل وضع الأزمة
+        $plan->update(['is_crisis_mode' => true]);
+
+        // جلب الاختبارات القريبة
+        $upcomingExams = Auth::user()->exams()
+            ->whereBetween('exam_date', [now(), now()->addDays(5)])
+            ->orderBy('exam_date')
+            ->get();
+
+        // إعادة ترتيب المواد: الأقرب اختباراً يحصل على ساعات أكثر
+        foreach ($plan->subjects as $subject) {
+            $nearestExam = $upcomingExams->firstWhere('subject_id', $subject->id);
+            if ($nearestExam) {
+                $daysUntilExam = now()->diffInDays($nearestExam->exam_date);
+                // كلما الاختبار أقرب، زادت الساعات
+                $extraHours = max(1, 5 - $daysUntilExam);
+
+                $plan->subjects()->updateExistingPivot($subject->id, [
+                    'allocated_hours' => $subject->pivot->allocated_hours + $extraHours,
+                ]);
+            }
+        }
+
+        // تحويل المهام غير المكتملة إلى وضع أزمة
+        Auth::user()->tasks()
+            ->where('status', '!=', 'completed')
+            ->update(['is_crisis' => true]);
+
+        return back()->with('warning', '🚨 تم تفعيل وضع الأزمة! تم إعادة ترتيب الأولويات.');
+    }
+}
+```
+
+---
+
+### 7. 📚 وحدة تحكم المواد — SubjectController
+
+**الملف:** `app/Http/Controllers/SubjectController.php`
+**الأمر:** `php artisan make:controller SubjectController`
+
+#### الدوال المطلوبة:
+
+| الدالة | الوصف | Method | Route |
+|--------|-------|--------|-------|
+| `index()` | عرض قائمة المواد | GET | `/subjects` |
+| `store()` | إضافة مادة جديدة | POST | `/subjects` |
+| `update()` | تعديل مادة | PUT | `/subjects/{id}` |
+| `destroy()` | حذف مادة | DELETE | `/subjects/{id}` |
+
+#### الكود التفصيلي:
+
+```php
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\Subject;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+
+class SubjectController extends Controller
+{
+    // ========== عرض كل المواد ==========
+    public function index()
+    {
+        $subjects = Auth::user()->subjects()
+            ->withCount(['tasks', 'summaries', 'exams'])
+            ->latest()
+            ->get();
+
+        return view('subjects.index', compact('subjects'));
+    }
+
+    // ========== إضافة مادة جديدة ==========
+    public function store(Request $request)
+    {
+        $validated = $request->validate([
+            'name'          => 'required|string|max:255',
+            'code'          => 'nullable|string|max:50',
+            'color'         => 'nullable|string|max:7',  // hex color
+            'difficulty'    => 'required|in:easy,medium,hard',
+            'credit_hours'  => 'nullable|integer|min:1|max:10',
+            'description'   => 'nullable|string|max:1000',
+        ]);
+
+        $validated['user_id'] = Auth::id();
+
+        Subject::create($validated);
+
+        return redirect()->route('subjects.index')
+            ->with('success', 'تمت إضافة المادة بنجاح.');
+    }
+
+    // ========== تعديل مادة ==========
+    public function update(Request $request, $id)
+    {
+        $subject = Subject::where('user_id', Auth::id())
+            ->where('id', $id)
+            ->firstOrFail();
+
+        $validated = $request->validate([
+            'name'          => 'required|string|max:255',
+            'code'          => 'nullable|string|max:50',
+            'color'         => 'nullable|string|max:7',
+            'difficulty'    => 'required|in:easy,medium,hard',
+            'credit_hours'  => 'nullable|integer|min:1|max:10',
+            'description'   => 'nullable|string|max:1000',
+        ]);
+
+        $subject->update($validated);
+
+        return redirect()->route('subjects.index')
+            ->with('success', 'تم تحديث المادة.');
+    }
+
+    // ========== حذف مادة ==========
+    public function destroy($id)
+    {
+        $subject = Subject::where('user_id', Auth::id())
+            ->where('id', $id)
+            ->firstOrFail();
+
+        $subject->delete();
+
+        return redirect()->route('subjects.index')
+            ->with('success', 'تم حذف المادة.');
+    }
+}
+```
+
+---
+
+### 8. 📋 وحدة تحكم الاختبارات — ExamController
+
+**الملف:** `app/Http/Controllers/ExamController.php`
+**الأمر:** `php artisan make:controller ExamController`
+
+#### الدوال المطلوبة:
+
+| الدالة | الوصف | Method | Route |
+|--------|-------|--------|-------|
+| `index()` | عرض الاختبارات | GET | `/exams` |
+| `store()` | إضافة اختبار | POST | `/exams` |
+| `update()` | تعديل اختبار | PUT | `/exams/{id}` |
+| `destroy()` | حذف اختبار | DELETE | `/exams/{id}` |
+
+#### الكود التفصيلي:
+
+```php
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\Exam;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+
+class ExamController extends Controller
+{
+    // ========== عرض الاختبارات ==========
+    public function index(Request $request)
+    {
+        $query = Exam::where('user_id', Auth::id())->with('subject');
+
+        // فلترة: القادمة فقط
+        if ($request->boolean('upcoming')) {
+            $query->where('exam_date', '>', now());
+        }
+
+        // فلترة: حسب المادة
+        if ($request->filled('subject_id')) {
+            $query->where('subject_id', $request->subject_id);
+        }
+
+        $exams = $query->orderBy('exam_date', 'asc')->paginate(15);
+        $subjects = Auth::user()->subjects;
+
+        return view('exams.index', compact('exams', 'subjects'));
+    }
+
+    // ========== إضافة اختبار ==========
+    public function store(Request $request)
+    {
+        $validated = $request->validate([
+            'subject_id' => 'required|exists:subjects,id',
+            'title'      => 'required|string|max:255',
+            'exam_date'  => 'required|date|after:now',
+            'exam_type'  => 'required|in:quiz,midterm,final,oral,practical',
+            'location'   => 'nullable|string|max:255',
+            'notes'      => 'nullable|string',
+        ]);
+
+        $validated['user_id'] = Auth::id();
+
+        Exam::create($validated);
+
+        return redirect()->route('exams.index')
+            ->with('success', 'تمت إضافة الاختبار بنجاح.');
+    }
+
+    // ========== تعديل اختبار ==========
+    public function update(Request $request, $id)
+    {
+        $exam = Exam::where('user_id', Auth::id())
+            ->where('id', $id)
+            ->firstOrFail();
+
+        $validated = $request->validate([
+            'subject_id' => 'required|exists:subjects,id',
+            'title'      => 'required|string|max:255',
+            'exam_date'  => 'required|date',
+            'exam_type'  => 'required|in:quiz,midterm,final,oral,practical',
+            'location'   => 'nullable|string|max:255',
+            'notes'      => 'nullable|string',
+            'grade'      => 'nullable|numeric|min:0',
+            'max_grade'  => 'nullable|numeric|min:0',
+        ]);
+
+        $exam->update($validated);
+
+        return redirect()->route('exams.index')
+            ->with('success', 'تم تحديث الاختبار.');
+    }
+
+    // ========== حذف اختبار ==========
+    public function destroy($id)
+    {
+        $exam = Exam::where('user_id', Auth::id())
+            ->where('id', $id)
+            ->firstOrFail();
+
+        $exam->delete();
+
+        return redirect()->route('exams.index')
+            ->with('success', 'تم حذف الاختبار.');
+    }
+}
+```
+
+---
+
+### 9. 🔔 وحدة تحكم التنبيهات — NotificationController
+
+**الملف:** `app/Http/Controllers/NotificationController.php`
+**الأمر:** `php artisan make:controller NotificationController`
+
+#### الدوال المطلوبة:
+
+| الدالة | الوصف | Method | Route |
+|--------|-------|--------|-------|
+| `index()` | عرض كل التنبيهات | GET | `/notifications` |
+| `markAsRead($id)` | تحديد تنبيه كمقروء | PATCH | `/notifications/{id}/read` |
+| `markAllRead()` | تحديد الكل كمقروء | POST | `/notifications/read-all` |
+
+#### الكود التفصيلي:
+
+```php
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\Notification;
+use Illuminate\Support\Facades\Auth;
+
+class NotificationController extends Controller
+{
+    // ========== عرض التنبيهات ==========
+    public function index()
+    {
+        $notifications = Notification::where('user_id', Auth::id())
+            ->latest()
+            ->paginate(20);
+
+        $unreadCount = Notification::where('user_id', Auth::id())
+            ->where('is_read', false)
+            ->count();
+
+        return view('notifications.index', compact('notifications', 'unreadCount'));
+    }
+
+    // ========== تحديد تنبيه كمقروء ==========
+    public function markAsRead($id)
+    {
+        $notification = Notification::where('user_id', Auth::id())
+            ->where('id', $id)
+            ->firstOrFail();
+
+        $notification->markAsRead();
+
+        return response()->json(['status' => 'read']);
+    }
+
+    // ========== تحديد الكل كمقروء ==========
+    public function markAllRead()
+    {
+        Notification::where('user_id', Auth::id())
+            ->where('is_read', false)
+            ->update(['is_read' => true, 'read_at' => now()]);
+
+        return back()->with('success', 'تم تحديد كل التنبيهات كمقروءة.');
+    }
+}
+```
+
+---
+
+### 🔗 ملخص الـ Routes
+
+ضع الكود التالي في ملف `routes/web.php`:
+
+```php
+use App\Http\Controllers\{
+    AuthController,
+    DashboardController,
+    SummaryController,
+    AssistantController,
+    TaskController,
+    ScheduleController,
+    SubjectController,
+    ExamController,
+    NotificationController
+};
+
+// ========== صفحات عامة (بدون تسجيل دخول) ==========
+Route::get('/register', [AuthController::class, 'showRegisterForm'])->name('register');
+Route::post('/register', [AuthController::class, 'register']);
+Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
+Route::post('/login', [AuthController::class, 'login']);
+
+// ========== صفحات محمية (تتطلب تسجيل دخول) ==========
+Route::middleware('auth')->group(function () {
+
+    // خروج
+    Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+
+    // الملف الشخصي
+    Route::get('/profile', [AuthController::class, 'profile'])->name('profile');
+    Route::put('/profile', [AuthController::class, 'updateProfile'])->name('profile.update');
+
+    // لوحة التحكم
+    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
+
+    // المواد الدراسية
+    Route::resource('subjects', SubjectController::class)->except(['create', 'show', 'edit']);
+
+    // المهام
+    Route::resource('tasks', TaskController::class);
+    Route::patch('/tasks/{id}/toggle', [TaskController::class, 'toggleStatus'])->name('tasks.toggle');
+    Route::post('/tasks/reorder', [TaskController::class, 'reorderPriorities'])->name('tasks.reorder');
+
+    // الملخصات
+    Route::resource('summaries', SummaryController::class);
+    Route::post('/summaries', [SummaryController::class, 'store'])->name('summaries.store');
+
+    // خطط الدراسة
+    Route::resource('plans', ScheduleController::class);
+    Route::post('/plans/crisis', [ScheduleController::class, 'activateCrisisMode'])->name('plans.crisis');
+
+    // الاختبارات
+    Route::resource('exams', ExamController::class)->except(['create', 'show', 'edit']);
+
+    // المساعد الذكي
+    Route::get('/assistant', [AssistantController::class, 'index'])->name('assistant');
+    Route::post('/assistant/chat', [AssistantController::class, 'chat'])->name('assistant.chat');
+    Route::get('/assistant/history', [AssistantController::class, 'history'])->name('assistant.history');
+    Route::post('/assistant/generate-quiz', [AssistantController::class, 'generateQuiz'])->name('assistant.quiz');
+
+    // التنبيهات
+    Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
+    Route::patch('/notifications/{id}/read', [NotificationController::class, 'markAsRead'])->name('notifications.read');
+    Route::post('/notifications/read-all', [NotificationController::class, 'markAllRead'])->name('notifications.readAll');
+
+    // الصفحة الرئيسية → Dashboard
+    Route::get('/', fn() => redirect()->route('dashboard'));
+});
+```
+
+---
+
+### 📊 ملخص الـ Controllers
+
+| # | Controller | الدوال | المسؤولية |
+|---|-----------|--------|-----------|
+| 1 | `AuthController` | 7 | التسجيل، الدخول، الخروج، الملف الشخصي |
+| 2 | `DashboardController` | 1 | عرض لوحة التحكم الشاملة |
+| 3 | `SummaryController` | 5 | رفع الملفات، التلخيص بالـ AI، عرض الملخصات |
+| 4 | `AssistantController` | 4 | المحادثة الذكية، توليد الأسئلة |
+| 5 | `TaskController` | 9 | CRUD المهام + تبديل الحالة + ترتيب ذكي |
+| 6 | `ScheduleController` | 6 | خطط المذاكرة + وضع الأزمة |
+| 7 | `SubjectController` | 4 | CRUD المواد الدراسية |
+| 8 | `ExamController` | 4 | CRUD الاختبارات |
+| 9 | `NotificationController` | 3 | عرض وتحديد التنبيهات |
+
+---
+
+### 🚀 أوامر إنشاء الـ Controllers
+
+```bash
+php artisan make:controller AuthController
+php artisan make:controller DashboardController
+php artisan make:controller SummaryController
+php artisan make:controller AssistantController
+php artisan make:controller TaskController
+php artisan make:controller ScheduleController
+php artisan make:controller SubjectController
+php artisan make:controller ExamController
+php artisan make:controller NotificationController
+```
