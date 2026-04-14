@@ -2430,3 +2430,437 @@ php artisan make:controller SubjectController
 php artisan make:controller ExamController
 php artisan make:controller NotificationController
 ```
+
+---
+
+## 🧩 أقسام إضافية مقترحة للتنفيذ
+
+هذه أقسام لم تُضف بعد ككود، وهي خطوات تنفيذية واجبة لإنجاز المشروع بالكامل. كل قسم يحتوي وصف المطلوب فقط — بدون كود — لتنفيذه لاحقاً بالتتابع.
+
+---
+
+### 📦 القسم الأول: الخدمات (Services)
+
+الـ Services هي طبقة منطقية بين الـ Controller والـ Model. نقلنا المنطق المعقد إلى ملفات منفصلة عشان نظف الكود ونسهّل صيانته.
+
+#### 1. AIService.php — خدمة الذكاء الاصطناعي
+
+**المسار:** `app/Services/AIService.php`
+
+**المطلوب:**
+- ربط مع OpenAI API (أو أي مزود AI مثل Gemini)
+- دالة `summarize($text, $level)` — تاخذ نص ومستوى تلخيص وترجع ملخص
+- دالة `chat($history, $message)` — تاخذ سجل المحادثة ورسالة جديدة وترجع رد
+- دالة `generateQuiz($subject, $topic, $type, $count, $difficulty)` — توليد أسئلة
+- إعداد الـ API Key من ملف `.env`
+- معالجة الأخطاء (timeout, rate limit, invalid response)
+- logging لكل طلب AI لتتبع الاستهلاك
+
+#### 2. SummaryService.php — خدمة التلخيص
+
+**المسار:** `app/Services/SummaryService.php`
+
+**المطلوب:**
+- دالة `extractTextFromPdf($filePath)` — استخراج نص من ملف PDF
+- دالة `cleanText($text)` — تنظيف النص من الرموز والمسافات الزائدة
+- دالة `splitTextIntoChunks($text, $maxTokens)` — تقسيم نص طويل لأجزاء (عشان API له حد tokens)
+- دالة `calculateReadingTime($wordCount)` — حساب وقت القراءة المقدر
+- التعامل مع ملفات PDF المحمية أو الفارغة
+
+#### 3. ScheduleGenerator.php — خدمة الجدولة
+
+**المسار:** `app/Services/ScheduleGenerator.php`
+
+**المطلوب:**
+- دالة `generate($plan, $subjects, $dailyHours, $preferredDays)` — الخوارزمية الرئيسية
+- توزيع المواد على أيام الأسبوع بناءً على:
+  - صعوبة كل مادة (easy/medium/hard → ساعات مختلفة)
+  - مواعيد الاختبارات القادمة (الأقرب يحصل أولوية)
+  - الأيام المفضلة للطالب
+  - ساعات الدراسة اليومية المتاحة
+- مراعاة فترات الراحة بين المواد
+- عدم تعيين أكثر من مادتين صعبتين في نفس اليوم
+- دالة `generateCrisisPlan($plan, $upcomingExams)` — خطة أزمة مكثفة
+
+---
+
+### 🎨 القسم الثاني: واجهات العرض (Blade Views)
+
+كل صفحة تحتاج ملف Blade. هذه قائمة الصفحات المطلوبة بالترتيب:
+
+#### صفحات المصادقة:
+| الصفحة | الملف | الوصف |
+|--------|-------|-------|
+| تسجيل | `resources/views/auth/register.blade.php` | فورم: اسم، إيميل، كلمة مرور، جامعة، تخصص |
+| دخول | `resources/views/auth/login.blade.php` | فورم: إيميل + كلمة مرور + تذكرني |
+| الملف الشخصي | `resources/views/auth/profile.blade.php` | عرض + تعديل بيانات الطالب + رفع صورة |
+
+#### الصفحة الرئيسية:
+| الصفحة | الملف | الوصف |
+|--------|-------|-------|
+| لوحة التحكم | `resources/views/dashboard.blade.php` | بطاقات إحصائية، اختبارات قادمة، شريط تقدم، تنبيهات |
+
+#### صفحات المواد:
+| الصفحة | الملف | الوصف |
+|--------|-------|-------|
+| قائمة المواد | `resources/views/subjects/index.blade.php` | كروت المواد مع عدد المهام والاختبارات لكل مادة |
+
+#### صفحات المهام:
+| الصفحة | الملف | الوصف |
+|--------|-------|-------|
+| قائمة المهام | `resources/views/tasks/index.blade.php` | فلترة + ترتيب + كروت مهام مع ألوان أولوية |
+| إنشاء مهمة | `resources/views/tasks/create.blade.php` | فورم: عنوان، وصف، مادة، أولوية، موعد |
+| تعديل مهمة | `resources/views/tasks/edit.blade.php` | نفس الفورم مع بيانات موجودة |
+| تفاصيل مهمة | `resources/views/tasks/show.blade.php` | عرض كامل + تبديل الحالة |
+
+#### صفحات الملخصات:
+| الصفحة | الملف | الوصف |
+|--------|-------|-------|
+| قائمة الملخصات | `resources/views/summaries/index.blade.php` | كروت ملخصات مع نسبة التلخيص |
+| إنشاء ملخص | `resources/views/summaries/create.blade.php` | رفع PDF أو لصق نص + اختيار مستوى |
+| عرض ملخص | `resources/views/summaries/show.blade.php` | النص الأصلي ↔ الملخص جنب بعض + إحصائيات |
+
+#### صفحات المساعد الذكي:
+| الصفحة | الملف | الوصف |
+|--------|-------|-------|
+| المحادثة | `resources/views/assistant/index.blade.php` | واجهة chat مثل ChatGPT + اختيار مادة |
+| سجل المحادثات | `resources/views/assistant/history.blade.php` | عرض المحادثات السابقة مرتبة بالتاريخ |
+
+#### صفحات خطط الدراسة:
+| الصفحة | الملف | الوصف |
+|--------|-------|-------|
+| قائمة الخطط | `resources/views/plans/index.blade.php` | كروت خطط مع حالة (فعّالة/منتهية/أزمة) |
+| إنشاء خطة | `resources/views/plans/create.blade.php` | اختيار مواد + ساعات + أيام مفضلة |
+| عرض خطة | `resources/views/plans/show.blade.php` | جدول أسبوعي ملون + زر وضع الأزمة |
+
+#### صفحات الاختبارات:
+| الصفحة | الملف | الوصف |
+|--------|-------|-------|
+| قائمة الاختبارات | `resources/views/exams/index.blade.php` | كروت اختبارات مع عد تنازلي |
+
+#### صفحات التنبيهات:
+| الصفحة | الملف | الوصف |
+|--------|-------|-------|
+| التنبيهات | `resources/views/notifications/index.blade.php` | قائمة تنبيهات مع تحديد كمقروء |
+
+#### القوالب المشتركة:
+| الملف | الوصف |
+|-------|-------|
+| `resources/views/layouts/app.blade.php` | القالب الرئيسي (Header + Sidebar + Footer +yield content) |
+| `resources/views/partials/sidebar.blade.php` | القائمة الجانبية (روابط + عداد تنبيهات) |
+| `resources/views/partials/navbar.blade.php` | الشريط العلوي (اسم المستخدم + صورة + بحث) |
+| `resources/views/partials/crisis-banner.blade.php` | بانر أحمر يظهر في وضع الأزمة |
+
+---
+
+### 📡 القسم الثالث: الـ API Endpoints (لتطبيق موبايل مستقبلاً)
+
+لو حابين يصيرون يبنون تطبيق موبايل لاحقاً، لازم نجهز API endpoints. هذه مسارات `routes/api.php`:
+
+| Method | Endpoint | الوصف | Auth |
+|--------|----------|-------|------|
+| POST | `/api/login` | تسجيل دخول → يرجع token | ❌ |
+| POST | `/api/register` | تسجيل حساب جديد | ❌ |
+| GET | `/api/dashboard` | بيانات لوحة التحكم | ✅ |
+| GET | `/api/subjects` | قائمة المواد | ✅ |
+| POST | `/api/subjects` | إضافة مادة | ✅ |
+| GET | `/api/tasks` | قائمة المهام (مع فلترة) | ✅ |
+| POST | `/api/tasks` | إنشاء مهمة | ✅ |
+| PATCH | `/api/tasks/{id}/toggle` | تبديل حالة مهمة | ✅ |
+| GET | `/api/summaries` | قائمة الملخصات | ✅ |
+| POST | `/api/summaries` | إنشاء ملخص | ✅ |
+| GET | `/api/plans` | قائمة خطط الدراسة | ✅ |
+| POST | `/api/plans` | إنشاء خطة | ✅ |
+| POST | `/api/plans/crisis` | تفعيل وضع الأزمة | ✅ |
+| GET | `/api/exams` | قائمة الاختبارات | ✅ |
+| POST | `/api/exams` | إضافة اختبار | ✅ |
+| POST | `/api/assistant/chat` | محادثة مع المساعد | ✅ |
+| POST | `/api/assistant/quiz` | توليد أسئلة | ✅ |
+| GET | `/api/notifications` | التنبيهات | ✅ |
+| POST | `/api/notifications/read-all` | تحديد الكل كمقروء | ✅ |
+
+**المطلوب:**
+- استخدام Laravel Sanctum للمصادقة عبر API Tokens
+- ترجيع البيانات بصيغة JSON دائماً
+- إضافة `Accept: application/json` header
+- توثيق الـ API باستخدام أداة مثل Swagger أو Scribe
+
+---
+
+### 🔧 القسم الرابع: Middleware إضافي
+
+| Middleware | الوصف |
+|-----------|-------|
+| `auth` | التأكد من تسجيل الدخول (يأتي جاهز مع Laravel) |
+| `guest` | منع المستخدم المسجل من دخول صفحات التسجيل/الدخول |
+| `VerifyCsrfToken` | حماية من هجمات CSRF (جاهز مع Laravel) |
+| `throttle:60,1` | تحديد عدد الطلبات (60 طلب/دقيقة) مهم لـ AI endpoints |
+
+**المطلوب:**
+- تطبيق `throttle` على مسارات AI (`/assistant/chat`, `/summaries`) عشان منع إساءة الاستخدام
+- تطبيق `auth` على كل المسارات المحمية (تم ذكره في Routes)
+
+---
+
+### 🧪 القسم الخامس: خطة الاختبار
+
+#### اختبارات يدوية (Manual Testing):
+
+| # | الاختبار | الخطوات | النتيجة المتوقعة |
+|---|---------|---------|-----------------|
+| 1 | تسجيل مستخدم جديد | فتح /register → تعبئة البيانات → إرسال | يتم إنشاء حساب وتحويل لـ Dashboard |
+| 2 | تسجيل دخول خاطئ | إدخال إيميل صحيح + كلمة مرور خاطئة | ظهور رسالة خطأ |
+| 3 | إضافة مادة | Dashboard → المواد → إضافة → تعبئة | تظهر المادة في القائمة |
+| 4 | رفع PDF وتلخيصه | الملخصات → جديد → رفع PDF → تلخيص | ظهور الملخص خلال 10-30 ثانية |
+| 5 | لصق نص وتلخيصه | الملخصات → جديد → لصق نص → تلخيص مختصر | الملخص أقصر من الأصلي بنسبة واضحة |
+| 6 | محادثة مع المساعد | المساعد → كتابة سؤال → إرسال | رد ذكي يخص المادة خلال 5-15 ثانية |
+| 7 | توليد أسئلة | المساعد → توليد أسئلة → اختيار مادة ونوع | 5-10 أسئلة منوعة مع إجابات |
+| 8 | إنشاء مهمة | المهام → جديدة → تعبئة | تظهر في القائمة مع اللون المناسب |
+| 9 | إكمال مهمة | الضغط على checkbox المهمة | تتغير حالتها وتتحرك للأسفل |
+| 10 | إنشاء خطة مذاكرة | الخطط → جديدة → اختيار مواد | جدول أسبوعي متوازن |
+| 11 | تفعيل وضع الأزمة | الخطط → تفعيل الأزمة | بانر أحمر + إعادة ترتيب الأولويات |
+| 12 | إضافة اختبار | الاختبارات → إضافة → تعبئة | يظهر مع عد تنازلي |
+| 13 | اختبار خلال يومين | إضافة اختبار قريب → فتح Dashboard | وضع الأزمة يتفعل تلقائياً |
+| 14 | حذف ملخص | الملخصات → حذف | يتم حذف الملخص والملف |
+
+#### اختبارات أداء (Performance Testing):
+
+| المقياس | الهدف | طريقة القياس |
+|---------|-------|-------------|
+| زمن تحميل Dashboard | < 2 ثانية | Laravel Debugbar |
+| زمن التلخيص (نص 5000 كلمة) | < 30 ثانية | Timer يدوي |
+| زمن رد المساعد | < 15 ثانية | Timer يدوي |
+| عدد المستخدمين المتزامنين | 50+ | Apache Bench أو JMeter |
+| حجم ملف PDF الأقصى | 20MB | اختبار بملفات مختلفة الأحجام |
+
+#### اختبارات أمنية (Security Testing):
+
+| الاختبار | الوصف |
+|---------|-------|
+| SQL Injection | إدخال أوامر SQL في حقول الإدخال |
+| XSS | إدخال JavaScript في الحقول النصية |
+| CSRF | التأكد من توكن CSRF في كل فورم |
+| Authorization | محاولة وصول لبيانات مستخدم آخر |
+| File Upload | رفع ملفات غير PDF (exe, php, sh) |
+| Brute Force | محاولة تسجيل دخول 100 مرة |
+
+---
+
+### 📐 القسم السادس: تصميم قاعدة البيانات (ER Diagram)
+
+**المطلوب رسم ER Diagram يوضح:**
+- 9 جداول (users, subjects, tasks, summaries, study_plans, plan_subject, exams, chat_messages, notifications)
+- العلاقات بينها (One-to-Many, Many-to-Many)
+- المفاتيح الأجنبية (Foreign Keys)
+- أنواع البيانات لكل حقل
+
+**أدوات مقترحة للرسم:**
+- draw.io (مجاني)
+- dbdiagram.io (مجاني — يكتب كود ويرسم)
+- MySQL Workbench (يولّد تلقائياً من قاعدة البيانات)
+
+---
+
+### 🎯 القسم السابع: خوارزميات مهمة
+
+#### 1. خوارزمية ترتيب الأولويات الذكي (Smart Priority Sorting):
+
+**المنطق:**
+- احسب الأيام المتبقية للموعد النهائي
+- لو متأخر → `urgent`
+- لو أقل من يوم → `urgent`
+- لو أقل من 3 أيام → `high`
+- لو أقل من أسبوع → `medium`
+- لو أكثر من أسبوع → `low`
+- ضع في الاعتبار صعوبة المادة المرتبطة
+- ضع في الاعتبار عدد المهام المعلقة لكل مادة
+
+#### 2. خوارزمية الجدولة الأسبوعية (Weekly Scheduler):
+
+**المنطق:**
+- حدد ساعات الدراسة اليومية المتاحة
+- احسب وزن كل مادة بناءً على: (صعوبة × ساعات معتمدة) ÷ أيام حتى أقرب اختبار
+- وزّن المواد على الأيام بحيث:
+  - كل يوم يحتوي مزيج من سهل ومتوسط وصعب
+  - لا يزيد عن مادتين صعبتين في نفس اليوم
+  - المادة اللي اختبارها أقرب تحصل على وقت أكثر
+  - خصص فترات راحة (15-30 دقيقة بين كل مادة)
+
+#### 3. خوارزمية وضع الأزمة (Crisis Mode):
+
+**المنطق:**
+- تفحص: هل في اختبار خلال 3 أيام؟
+- لو نعم: فعّل وضع الأزمة
+- رتّب المواد: الأقرب اختباراً أولاً
+- زوّد ساعات المواد القريبة على حساب البعيدة
+- حوّل كل المهام غير المكتملة لـ `is_crisis = true`
+- أرسل تنبيه طوارئ للطالب
+- اقترح خطة مذاكرة مكثفة (ساعات أطول، راحة أقل)
+
+---
+
+### 📱 القسم الثامن: تصميم الواجهة (UI/UX Guidelines)
+
+#### الألوان المقترحة:
+
+| العنصر | اللون | الكود |
+|--------|-------|-------|
+| الرئيسي (Primary) | أزرق | `#4F46E5` |
+| الثانوي (Secondary) | بنفسجي | `#7C3AED` |
+| النجاح (Success) | أخضر | `#10B981` |
+| التحذير (Warning) | برتقالي | `#F59E0B` |
+| الخطر (Danger) | أحمر | `#EF4444` |
+| وضع الأزمة | أحمر داكن | `#DC2626` |
+| الخلفية | رمادي فاتح | `#F3F4F6` |
+| النص | رمادي داكن | `#1F2937` |
+
+#### خطوط مقترحة:
+- **العربي:** Cairo أو Tajawal (من Google Fonts)
+- **الإنجليزي:** Inter أو Poppins
+- **الأكواد:** JetBrains Mono
+
+#### مبادئ التصميم:
+- RTL كافتراضي (عربي)
+- ألوان الأولويات: منخفض (أخضر) → متوسط (أصفر) → عالي (برتقالي) → عاجل (أحمر)
+- أيقونات واضحة لكل قسم (📚 مواد، ✅ مهام، 📝 ملخصات، 📅 خطط)
+- بطاقات (Cards) لعرض البيانات بدل جداول مملة
+- شريط بحث سريع في الـ Navbar
+- زر "إضافة سريعة" (FAB button) في الموبايل
+- وضع داكن (Dark Mode) اختياري
+
+---
+
+### 🔐 القسم التاسع: متغيرات البيئة (.env)
+
+**المطلوب إضافة هذه المتغيرات في ملف `.env`:**
+
+```
+# التطبيق
+APP_NAME="منصة التعلّم الذكي"
+APP_ENV=local
+APP_KEY=
+APP_DEBUG=true
+APP_URL=http://localhost:8000
+
+# قاعدة البيانات
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=smart_learning
+DB_USERNAME=root
+DB_PASSWORD=
+
+# الذكاء الاصطناعي
+OPENAI_API_KEY=sk-your-key-here
+AI_MODEL=gpt-4
+AI_MAX_TOKENS=2000
+AI_TEMPERATURE=0.7
+
+# رفع الملفات
+FILESYSTEM_DRIVER=public
+MAX_UPLOAD_SIZE=20480
+
+# إعدادات التلخيص
+SUMMARY_BRIEF_MAX_TOKENS=300
+SUMMARY_MEDIUM_MAX_TOKENS=800
+SUMMARY_DETAILED_MAX_TOKENS=1500
+
+# وضع الأزمة
+CRISIS_DAYS_THRESHOLD=3
+
+# التنبيهات
+NOTIFICATION_ENABLED=true
+EXAM_REMINDER_DAYS_BEFORE=3
+```
+
+---
+
+### 📦 القسم العاشر: الحزم المطلوبة
+
+**حزم Composer (PHP):**
+
+| الحزمة | الغرض | أمر التثبيت |
+|--------|-------|------------|
+| `laravel/breeze` | نظام Auth جاهز (تسجيل/دخول) | `composer require laravel/breeze --dev` ثم `php artisan breeze:install` |
+| `smalot/pdfparser` | استخراج نص من PDF | `composer require smalot/pdfparser` |
+| `openai-php/laravel` | SDK رسمي لـ OpenAI في Laravel | `composer require openai-php/laravel` |
+| `barryvdh/laravel-debugbar` | شريط تصحيح للتطوير | `composer require barryvdh/laravel-debugbar --dev` |
+
+**حزم NPM (Frontend):**
+
+| الحزمة | الغرض | أمر التثبيت |
+|--------|-------|------------|
+| `tailwindcss` | CSS Framework | `npm install -D tailwindcss` |
+| `alpinejs` | تفاعلية بسيطة بدون React/Vue | `npm install alpinejs` |
+| `axios` | طلبات AJAX للمساعد الذكي | `npm install axios` |
+
+**أوامر التثبيت الكاملة:**
+```bash
+composer require laravel/breeze --dev
+php artisan breeze:install
+composer require smalot/pdfparser
+composer require openai-php/laravel
+composer require barryvdh/laravel-debugbar --dev
+npm install -D tailwindcss
+npm install alpinejs axios
+```
+
+---
+
+### ✅ القسم الحادي عشر: Checklist التنفيذ النهائي
+
+استخدم هذه القائمة لتتبع التقدم:
+
+#### البنية التحتية:
+- [ ] إنشاء مشروع Laravel جديد
+- [ ] تثبيت الحزم المطلوبة (Composer + NPM)
+- [ ] إعداد ملف `.env`
+- [ ] إعداد قاعدة البيانات واختبار الاتصال
+
+#### قاعدة البيانات:
+- [ ] إنشاء كل الـ Migrations (9 جداول)
+- [ ] تشغيل `php artisan migrate`
+- [ ] إنشاء كل الـ Models مع العلاقات
+
+#### الخدمات:
+- [ ] كتابة `AIService.php`
+- [ ] كتابة `SummaryService.php`
+- [ ] كتابة `ScheduleGenerator.php`
+
+#### Controllers:
+- [ ] كتابة `AuthController`
+- [ ] كتابة `DashboardController`
+- [ ] كتابة `SummaryController`
+- [ ] كتابة `AssistantController`
+- [ ] escritura `TaskController`
+- [ ] كتابة `ScheduleController`
+- [ ] كتابة `SubjectController`
+- [ ] كتابة `ExamController`
+- [ ] كتابة `NotificationController`
+
+#### الـ Routes:
+- [ ] تعريف كل المسارات في `routes/web.php`
+
+#### الواجهات (Views):
+- [ ] القالب الرئيسي `layouts/app.blade.php`
+- [ ] القائمة الجانبية + الشريط العلوي
+- [ ] صفحات Auth (تسجيل، دخول، ملف شخصي)
+- [ ] Dashboard
+- [ ] صفحات المواد
+- [ ] صفحات المهام
+- [ ] صفحات الملخصات
+- [ ] صفحات المساعد الذكي
+- [ ] صفحات خطط الدراسة
+- [ ] صفحات الاختبارات
+- [ ] صفحات التنبيهات
+- [ ] بانر وضع الأزمة
+
+#### الاختبار:
+- [ ] اختبار كل ميزة يدوياً (14 اختبار)
+- [ ] اختبار الأداء
+- [ ] اختبار الأمان
+
+#### التسليم:
+- [ ] رفع الكود على GitHub
+- [ ] كتابة التقرير النهائي
+- [ ] تجهيز العرض التقديمي
