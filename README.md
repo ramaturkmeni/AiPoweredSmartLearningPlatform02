@@ -385,3 +385,728 @@ Route::post('/lecture/{id}/generate-quiz', [AIController::class, 'generateQuizFo
 
 هل الشرح واضح بالنسبة لك بهذا التسلسل؟ إذا كنت مستعداً، ابدأ بتنفيذ (المرحلة الأولى والثانية) وأخبرني إذا واجهتك أي رسالة خطأ في الـ Terminal لنقوم بحلها معاً.
 
+---
+
+## 🗃️ شرح تفصيلي للنماذج (Models) والترحيلات (Migrations)
+
+هذا القسم يشرح كل ملف Model و Migration المقابل له، بما يجب أن يحتويه من حقول وعلاقات وكود.
+
+---
+
+### 1. 📌 نموذج المستخدم — User
+
+**الملف:** `app/Models/User.php`
+**الترحيل:** `database/migrations/xxxx_create_users_table.php`
+
+#### حقول قاعدة البيانات:
+
+| الحقل | النوع | الوصف |
+|-------|------|-------|
+| `id` | bigint (PK) | المعرف الفريد |
+| `name` | string | اسم الطالب الكامل |
+| `email` | string (unique) | البريد الإلكتروني |
+| `password` | string (hashed) | كلمة المرور (مشفرة بـ bcrypt) |
+| `avatar` | string (nullable) | مسار صورة الملف الشخصي |
+| `university` | string (nullable) | اسم الجامعة |
+| `major` | string (nullable) | التخصص |
+| `level` | string (nullable) | المستوى الدراسي (سنة أولى، ثانية...) |
+| `email_verified_at` | timestamp (nullable) | وقت تأكيد البريد |
+| `created_at` | timestamp | تاريخ التسجيل |
+| `updated_at` | timestamp | تاريخ آخر تحديث |
+
+#### Migration:
+```php
+Schema::create('users', function (Blueprint $table) {
+    $table->id();
+    $table->string('name');
+    $table->string('email')->unique();
+    $table->timestamp('email_verified_at')->nullable();
+    $table->string('password');
+    $table->string('avatar')->nullable();
+    $table->string('university')->nullable();
+    $table->string('major')->nullable();
+    $table->string('level')->nullable();
+    $table->rememberToken();
+    $table->timestamps();
+});
+```
+
+#### Model — العلاقات:
+```php
+class User extends Authenticatable
+{
+    use HasFactory, Notifiable;
+
+    protected $fillable = [
+        'name', 'email', 'password', 'avatar',
+        'university', 'major', 'level',
+    ];
+
+    protected $hidden = ['password', 'remember_token'];
+
+    // الطالب لديه عدة مواد
+    public function subjects()
+    {
+        return $this->hasMany(Subject::class);
+    }
+
+    // الطالب لديه عدة مهام
+    public function tasks()
+    {
+        return $this->hasMany(Task::class);
+    }
+
+    // الطالب لديه عدة ملخصات
+    public function summaries()
+    {
+        return $this->hasMany(Summary::class);
+    }
+
+    // الطالب لديه عدة خطط دراسية
+    public function studyPlans()
+    {
+        return $this->hasMany(StudyPlan::class);
+    }
+
+    // الطالب لديه عدة اختبارات
+    public function exams()
+    {
+        return $this->hasMany(Exam::class);
+    }
+}
+```
+
+---
+
+### 2. 📚 نموذج المادة الدراسية — Subject
+
+**الملف:** `app/Models/Subject.php`
+**الترحيل:** `database/migrations/xxxx_create_subjects_table.php`
+
+#### حقول قاعدة البيانات:
+
+| الحقل | النوع | الوصف |
+|-------|------|-------|
+| `id` | bigint (PK) | المعرف الفريد |
+| `user_id` | bigint (FK → users) | صاحب المادة (الطالب) |
+| `name` | string | اسم المادة (مثال: "هندسة البرمجيات") |
+| `code` | string (nullable) | رمز المادة (مثال: "CS301") |
+| `color` | string (nullable) | لون تمييز المادة (hex code) |
+| `difficulty` | enum('easy','medium','hard') | مستوى صعوبة المادة |
+| `credit_hours` | integer (nullable) | عدد الساعات المعتمدة |
+| `description` | text (nullable) | وصف المادة |
+| `created_at` | timestamp | تاريخ الإضافة |
+| `updated_at` | timestamp | تاريخ آخر تحديث |
+
+#### Migration:
+```php
+Schema::create('subjects', function (Blueprint $table) {
+    $table->id();
+    $table->foreignId('user_id')->constrained()->onDelete('cascade');
+    $table->string('name');
+    $table->string('code')->nullable();
+    $table->string('color')->nullable();
+    $table->enum('difficulty', ['easy', 'medium', 'hard'])->default('medium');
+    $table->integer('credit_hours')->nullable();
+    $table->text('description')->nullable();
+    $table->timestamps();
+});
+```
+
+#### Model — العلاقات:
+```php
+class Subject extends Model
+{
+    use HasFactory;
+
+    protected $fillable = [
+        'user_id', 'name', 'code', 'color',
+        'difficulty', 'credit_hours', 'description',
+    ];
+
+    // المادة تتبع لطالب واحد
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    // المادة لديها عدة مهام
+    public function tasks()
+    {
+        return $this->hasMany(Task::class);
+    }
+
+    // المادة لديها عدة ملخصات
+    public function summaries()
+    {
+        return $this->hasMany(Summary::class);
+    }
+
+    // المادة لديها عدة اختبارات
+    public function exams()
+    {
+        return $this->hasMany(Exam::class);
+    }
+
+    // المادة تظهر في عدة خطط دراسية (علاقة متعددة إلى متعددة)
+    public function studyPlans()
+    {
+        return $this->belongsToMany(StudyPlan::class, 'plan_subject')
+                    ->withPivot('allocated_hours', 'day_of_week')
+                    ->withTimestamps();
+    }
+}
+```
+
+---
+
+### 3. ✅ نموذج المهمة — Task
+
+**الملف:** `app/Models/Task.php`
+**الترحيل:** `database/migrations/xxxx_create_tasks_table.php`
+
+#### حقول قاعدة البيانات:
+
+| الحقل | النوع | الوصف |
+|-------|------|-------|
+| `id` | bigint (PK) | المعرف الفريد |
+| `user_id` | bigint (FK → users) | صاحب المهمة |
+| `subject_id` | bigint (FK → subjects, nullable) | المادة المرتبطة (اختياري) |
+| `title` | string | عنوان المهمة |
+| `description` | text (nullable) | تفاصيل المهمة |
+| `priority` | enum('low','medium','high','urgent') | مستوى الأولوية |
+| `status` | enum('pending','in_progress','completed') | حالة المهمة |
+| `due_date` | datetime (nullable) | الموعد النهائي |
+| `completed_at` | datetime (nullable) | وقت الإنجاز الفعلي |
+| `is_crisis` | boolean (default: false) | هل المهمة في وضع الأزمة؟ |
+| `created_at` | timestamp | تاريخ الإنشاء |
+| `updated_at` | timestamp | تاريخ آخر تحديث |
+
+#### Migration:
+```php
+Schema::create('tasks', function (Blueprint $table) {
+    $table->id();
+    $table->foreignId('user_id')->constrained()->onDelete('cascade');
+    $table->foreignId('subject_id')->nullable()->constrained()->onDelete('set null');
+    $table->string('title');
+    $table->text('description')->nullable();
+    $table->enum('priority', ['low', 'medium', 'high', 'urgent'])->default('medium');
+    $table->enum('status', ['pending', 'in_progress', 'completed'])->default('pending');
+    $table->dateTime('due_date')->nullable();
+    $table->dateTime('completed_at')->nullable();
+    $table->boolean('is_crisis')->default(false);
+    $table->timestamps();
+});
+```
+
+#### Model — العلاقات:
+```php
+class Task extends Model
+{
+    use HasFactory;
+
+    protected $fillable = [
+        'user_id', 'subject_id', 'title', 'description',
+        'priority', 'status', 'due_date', 'completed_at', 'is_crisis',
+    ];
+
+    protected $casts = [
+        'due_date' => 'datetime',
+        'completed_at' => 'datetime',
+    ];
+
+    // المهمة تتبع لطالب واحد
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    // المهمة قد تكون مرتبطة بمادة
+    public function subject()
+    {
+        return $this->belongsTo(Subject::class);
+    }
+
+    // نطاق: المهام غير المكتملة
+    public function scopePending($query)
+    {
+        return $query->where('status', '!=', 'completed');
+    }
+
+    // نطاق: مهام الأولوية العالية
+    public function scopeUrgent($query)
+    {
+        return $query->where('priority', 'urgent');
+    }
+
+    // نطاق: مهام وضع الأزمة
+    public function scopeCrisis($query)
+    {
+        return $query->where('is_crisis', true);
+    }
+}
+```
+
+---
+
+### 4. 📝 نموذج الملخص — Summary
+
+**الملف:** `app/Models/Summary.php`
+**الترحيل:** `database/migrations/xxxx_create_summaries_table.php`
+
+#### حقول قاعدة البيانات:
+
+| الحقل | النوع | الوصف |
+|-------|------|-------|
+| `id` | bigint (PK) | المعرف الفريد |
+| `user_id` | bigint (FK → users) | صاحب الملخص |
+| `subject_id` | bigint (FK → subjects, nullable) | المادة المرتبطة |
+| `title` | string | عنوان الملخص |
+| `original_text` | longText | النص الأصلي (من الملف أو الإدخال) |
+| `summary_text` | longText | الملخص المُنتج بالذكاء الاصطناعي |
+| `summary_level` | enum('brief','medium','detailed') | مستوى التلخيص |
+| `file_path` | string (nullable) | مسار ملف PDF الأصلي |
+| `file_name` | string (nullable) | اسم الملف الأصلي |
+| `word_count_original` | integer | عدد كلمات النص الأصلي |
+| `word_count_summary` | integer | عدد كلمات الملخص |
+| `created_at` | timestamp | تاريخ الإنشاء |
+| `updated_at` | timestamp | تاريخ آخر تحديث |
+
+#### Migration:
+```php
+Schema::create('summaries', function (Blueprint $table) {
+    $table->id();
+    $table->foreignId('user_id')->constrained()->onDelete('cascade');
+    $table->foreignId('subject_id')->nullable()->constrained()->onDelete('set null');
+    $table->string('title');
+    $table->longText('original_text');
+    $table->longText('summary_text');
+    $table->enum('summary_level', ['brief', 'medium', 'detailed'])->default('medium');
+    $table->string('file_path')->nullable();
+    $table->string('file_name')->nullable();
+    $table->integer('word_count_original')->default(0);
+    $table->integer('word_count_summary')->default(0);
+    $table->timestamps();
+});
+```
+
+#### Model — العلاقات:
+```php
+class Summary extends Model
+{
+    use HasFactory;
+
+    protected $fillable = [
+        'user_id', 'subject_id', 'title', 'original_text',
+        'summary_text', 'summary_level', 'file_path', 'file_name',
+        'word_count_original', 'word_count_summary',
+    ];
+
+    // الملخص يتبع لطالب واحد
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    // الملخص قد يكون مرتبطاً بمادة
+    public function subject()
+    {
+        return $this->belongsTo(Subject::class);
+    }
+}
+```
+
+---
+
+### 5. 📅 نموذج خطة الدراسة — StudyPlan
+
+**الملف:** `app/Models/StudyPlan.php`
+**الترحيل:** `database/migrations/xxxx_create_study_plans_table.php`
+
+#### حقول قاعدة البيانات:
+
+| الحقل | النوع | الوصف |
+|-------|------|-------|
+| `id` | bigint (PK) | المعرف الفريد |
+| `user_id` | bigint (FK → users) | صاحب الخطة |
+| `name` | string | اسم الخطة (مثال: "خطة الأسبوع 5") |
+| `start_date` | date | تاريخ بداية الأسبوع |
+| `end_date` | date | تاريخ نهاية الأسبوع |
+| `total_study_hours` | decimal(5,2) | إجمالي ساعات المذاكرة المخططة |
+| `is_active` | boolean (default: true) | هل الخطة فعّالة حالياً؟ |
+| `is_crisis_mode` | boolean (default: false) | هل الخطة في وضع الأزمة؟ |
+| `notes` | text (nullable) | ملاحظات عامة على الخطة |
+| `created_at` | timestamp | تاريخ الإنشاء |
+| `updated_at` | timestamp | تاريخ آخر تحديث |
+
+#### Migration:
+```php
+Schema::create('study_plans', function (Blueprint $table) {
+    $table->id();
+    $table->foreignId('user_id')->constrained()->onDelete('cascade');
+    $table->string('name');
+    $table->date('start_date');
+    $table->date('end_date');
+    $table->decimal('total_study_hours', 5, 2)->default(0);
+    $table->boolean('is_active')->default(true);
+    $table->boolean('is_crisis_mode')->default(false);
+    $table->text('notes')->nullable();
+    $table->timestamps();
+});
+```
+
+#### الجدول الوسيط — `plan_subject` (علاقة متعدد إلى متعدد):
+
+```php
+Schema::create('plan_subject', function (Blueprint $table) {
+    $table->id();
+    $table->foreignId('study_plan_id')->constrained()->onDelete('cascade');
+    $table->foreignId('subject_id')->constrained()->onDelete('cascade');
+    $table->decimal('allocated_hours', 4, 1)->default(0);
+    $table->enum('day_of_week', ['saturday','sunday','monday','tuesday','wednesday','thursday','friday']);
+    $table->time('start_time')->nullable();
+    $table->time('end_time')->nullable();
+    $table->timestamps();
+
+    $table->unique(['study_plan_id', 'subject_id', 'day_of_week']);
+});
+```
+
+#### Model — العلاقات:
+```php
+class StudyPlan extends Model
+{
+    use HasFactory;
+
+    protected $fillable = [
+        'user_id', 'name', 'start_date', 'end_date',
+        'total_study_hours', 'is_active', 'is_crisis_mode', 'notes',
+    ];
+
+    protected $casts = [
+        'start_date' => 'date',
+        'end_date' => 'date',
+        'is_active' => 'boolean',
+        'is_crisis_mode' => 'boolean',
+    ];
+
+    // الخطة تتبع لطالب واحد
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    // الخطة تحتوي عدة مواد (متعدد إلى متعدد)
+    public function subjects()
+    {
+        return $this->belongsToMany(Subject::class, 'plan_subject')
+                    ->withPivot('allocated_hours', 'day_of_week', 'start_time', 'end_time')
+                    ->withTimestamps();
+    }
+
+    // نطاق: الخطط الفعّالة فقط
+    public function scopeActive($query)
+    {
+        return $query->where('is_active', true);
+    }
+
+    // نطاق: خطط وضع الأزمة
+    public function scopeCrisisMode($query)
+    {
+        return $query->where('is_crisis_mode', true);
+    }
+}
+```
+
+---
+
+### 6. 📋 نموذج الاختبار — Exam
+
+**الملف:** `app/Models/Exam.php`
+**الترحيل:** `database/migrations/xxxx_create_exams_table.php`
+
+#### حقول قاعدة البيانات:
+
+| الحقل | النوع | الوصف |
+|-------|------|-------|
+| `id` | bigint (PK) | المعرف الفريق |
+| `user_id` | bigint (FK → users) | صاحب الاختبار |
+| `subject_id` | bigint (FK → subjects) | المادة المرتبطة |
+| `title` | string | عنوان الاختبار (مثال: "ميدترم هندسة برمجيات") |
+| `exam_date` | datetime | موعد الاختبار |
+| `exam_type` | enum('quiz','midterm','final','oral','practical') | نوع الاختبار |
+| `location` | string (nullable) | مكان الاختبار |
+| `notes` | text (nullable) | ملاحظات |
+| `grade` | decimal(5,2) (nullable) | الدرجة (بعد الاختبار) |
+| `max_grade` | decimal(5,2) (nullable) | الدرجة العظمى |
+| `is_notified` | boolean (default: false) | هل تم تنبيه الطالب؟ |
+| `created_at` | timestamp | تاريخ الإنشاء |
+| `updated_at` | timestamp | تاريخ آخر تحديث |
+
+#### Migration:
+```php
+Schema::create('exams', function (Blueprint $table) {
+    $table->id();
+    $table->foreignId('user_id')->constrained()->onDelete('cascade');
+    $table->foreignId('subject_id')->constrained()->onDelete('cascade');
+    $table->string('title');
+    $table->dateTime('exam_date');
+    $table->enum('exam_type', ['quiz', 'midterm', 'final', 'oral', 'practical']);
+    $table->string('location')->nullable();
+    $table->text('notes')->nullable();
+    $table->decimal('grade', 5, 2)->nullable();
+    $table->decimal('max_grade', 5, 2)->nullable();
+    $table->boolean('is_notified')->default(false);
+    $table->timestamps();
+});
+```
+
+#### Model — العلاقات:
+```php
+class Exam extends Model
+{
+    use HasFactory;
+
+    protected $fillable = [
+        'user_id', 'subject_id', 'title', 'exam_date',
+        'exam_type', 'location', 'notes', 'grade',
+        'max_grade', 'is_notified',
+    ];
+
+    protected $casts = [
+        'exam_date' => 'datetime',
+    ];
+
+    // الاختبار يتبع لطالب واحد
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    // الاختبار يتبع لمادة واحدة
+    public function subject()
+    {
+        return $this->belongsTo(Subject::class);
+    }
+
+    // نطاق: الاختبارات القادمة
+    public function scopeUpcoming($query)
+    {
+        return $query->where('exam_date', '>', now())->orderBy('exam_date');
+    }
+
+    // نطاق: اختبارات هذا الأسبوع
+    public function scopeThisWeek($query)
+    {
+        return $query->whereBetween('exam_date', [now()->startOfWeek(), now()->endOfWeek()]);
+    }
+
+    // نطاق: اختبارات الأيام القادمة القريبة (لوضع الأزمة)
+    public function scopeWithinDays($query, $days = 3)
+    {
+        return $query->whereBetween('exam_date', [now(), now()->addDays($days)]);
+    }
+}
+```
+
+---
+
+### 7. 🤖 نموذج محادثة المساعد — ChatMessage
+
+**الملف:** `app/Models/ChatMessage.php`
+**الترحيل:** `database/migrations/xxxx_create_chat_messages_table.php`
+
+#### حقول قاعدة البيانات:
+
+| الحقل | النوع | الوصف |
+|-------|------|-------|
+| `id` | bigint (PK) | المعرف الفريد |
+| `user_id` | bigint (FK → users) | صاحب المحادثة |
+| `subject_id` | bigint (FK → subjects, nullable) | المادة المرتبطة |
+| `role` | enum('user','assistant') | دور المرسل (طالب أو المساعد الذكي) |
+| `message` | longText | محتوى الرسالة |
+| `created_at` | timestamp | وقت الإرسال |
+
+#### Migration:
+```php
+Schema::create('chat_messages', function (Blueprint $table) {
+    $table->id();
+    $table->foreignId('user_id')->constrained()->onDelete('cascade');
+    $table->foreignId('subject_id')->nullable()->constrained()->onDelete('set null');
+    $table->enum('role', ['user', 'assistant']);
+    $table->longText('message');
+    $table->timestamps();
+});
+```
+
+#### Model — العلاقات:
+```php
+class ChatMessage extends Model
+{
+    use HasFactory;
+
+    protected $fillable = [
+        'user_id', 'subject_id', 'role', 'message',
+    ];
+
+    // الرسالة تتبع لطالب واحد
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    // الرسالة قد تكون مرتبطة بمادة
+    public function subject()
+    {
+        return $this->belongsTo(Subject::class);
+    }
+
+    // نطاق: رسائل مساعد الذكاء الاصطناعي
+    public function scopeAssistant($query)
+    {
+        return $query->where('role', 'assistant');
+    }
+
+    // نطاق: رسائل الطالب
+    public function scopeUserMessages($query)
+    {
+        return $query->where('role', 'user');
+    }
+}
+```
+
+---
+
+### 8. 🔔 نموذج التنبيه — Notification
+
+**الملف:** `app/Models/Notification.php`
+**الترحيل:** `database/migrations/xxxx_create_notifications_table.php`
+
+#### حقول قاعدة البيانات:
+
+| الحقل | النوع | الوصف |
+|-------|------|-------|
+| `id` | bigint (PK) | المعرف الفريق |
+| `user_id` | bigint (FK → users) | صاحب التنبيه |
+| `type` | enum('exam_reminder','task_due','crisis_mode','study_plan','general') | نوع التنبيه |
+| `title` | string | عنوان التنبيه |
+| `message` | text | محتوى التنبيه |
+| `related_type` | string (nullable) | نوع الكيان المرتبط (Exam, Task, etc.) |
+| `related_id` | bigint (nullable) | معرف الكيان المرتبط |
+| `is_read` | boolean (default: false) | هل تمت قراءة التنبيه؟ |
+| `read_at` | timestamp (nullable) | وقت القراءة |
+| `created_at` | timestamp | وقت الإنشاء |
+
+#### Migration:
+```php
+Schema::create('notifications', function (Blueprint $table) {
+    $table->id();
+    $table->foreignId('user_id')->constrained()->onDelete('cascade');
+    $table->enum('type', ['exam_reminder', 'task_due', 'crisis_mode', 'study_plan', 'general']);
+    $table->string('title');
+    $table->text('message');
+    $table->string('related_type')->nullable();
+    $table->unsignedBigInteger('related_id')->nullable();
+    $table->boolean('is_read')->default(false);
+    $table->timestamp('read_at')->nullable();
+    $table->timestamps();
+});
+```
+
+#### Model — العلاقات:
+```php
+class Notification extends Model
+{
+    use HasFactory;
+
+    protected $fillable = [
+        'user_id', 'type', 'title', 'message',
+        'related_type', 'related_id', 'is_read', 'read_at',
+    ];
+
+    protected $casts = [
+        'read_at' => 'datetime',
+    ];
+
+    // التنبيه يتبع لطالب واحد
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    // نطاق: التنبيهات غير المقروءة
+    public function scopeUnread($query)
+    {
+        return $query->where('is_read', false);
+    }
+
+    // نطاق: تنبيهات وضع الأزمة
+    public function scopeCrisis($query)
+    {
+        return $query->where('type', 'crisis_mode');
+    }
+
+    // تحديد التنبيه كمقروء
+    public function markAsRead()
+    {
+        $this->update(['is_read' => true, 'read_at' => now()]);
+    }
+}
+```
+
+---
+
+### 🗺️ مخطط العلاقات (ER Diagram)
+
+```
+User (1) ──────< (N) Subject
+  │                   │
+  │                   ├──< Task
+  │                   ├──< Summary
+  │                   ├──< Exam
+  │                   └──>< StudyPlan  (متعدد إلى متعدد عبر plan_subject)
+  │
+  ├──< Task
+  ├──< Summary
+  ├──< StudyPlan
+  ├──< Exam
+  ├──< ChatMessage
+  └──< Notification
+```
+
+### 📊 ملخص الجداول
+
+| # | الجدول | الوصف | العلاقة مع User |
+|---|--------|-------|----------------|
+| 1 | `users` | بيانات الطلاب | — |
+| 2 | `subjects` | المواد الدراسية | واحد إلى متعدد |
+| 3 | `tasks` | المهام الدراسية | واحد إلى متعدد |
+| 4 | `summaries` | ملخصات الذكاء الاصطناعي | واحد إلى متعدد |
+| 5 | `study_plans` | خطط المذاكرة الأسبوعية | واحد إلى متعدد |
+| 6 | `plan_subject` | جدول وسيط (خطة ↔ مادة) | — |
+| 7 | `exams` | الاختبارات والمواعيد | واحد إلى متعدد |
+| 8 | `chat_messages` | محادثات المساعد الذكي | واحد إلى متعدد |
+| 9 | `notifications` | التنبيهات والإشعارات | واحد إلى متعدد |
+
+---
+
+### 🚀 أوامر إنشاء الـ Migrations والـ Models
+
+```bash
+# إنشاء Model + Migration معاً
+php artisan make:model Subject -m
+php artisan make:model Task -m
+php artisan make:model Summary -m
+php artisan make:model StudyPlan -m
+php artisan make:model Exam -m
+php artisan make:model ChatMessage -m
+php artisan make:model Notification -m
+
+# إنشاء الجدول الوسيط
+php artisan make:migration create_plan_subject_table
+
+# بعد تعبئة كل migration، شغّل:
+php artisan migrate
+```
+
+> **ملاحظة:** نموذج `User` يأتي جاهزاً مع Laravel، فقط عدّل عليه بإضافة الحقول والعلاقات الجديدة.
