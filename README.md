@@ -1,184 +1,387 @@
-# 🎓 منصة التعلّم الذكي المدعومة بالذكاء الاصطناعي
-# AI-Powered Smart Learning Platform
+ممتاز جداً. بناءً على الوصف المعماري للمشروع، ومخططات حالات الاستخدام (Use Case Diagrams)، وتصميم قاعدة البيانات (ERD) الذي قمت بإرفاقه، يمكن القول أن **البنية التحتية لمشروعك ممتازة ومترابطة بشكل منطقي واحترافي.**
 
-<p align="center">
-  <strong>منصة تعليمية ذكية تساعد الطلاب على تنظيم دراستهم وفهم المحتوى العلمي بكفاءة أعلى باستخدام تقنيات الذكاء الاصطناعي</strong>
-</p>
+لقد قمت بمطابقة متطلباتك ومخطط Use Case مع الجداول (DBML)، وإليك تحليل شامل لكيفية عمل النظام برمجياً بناءً على معطياتك، مع بعض الملاحظات التقنية الدقيقة لضمان نجاح التطوير:
 
----
+### 1. تكامل النظام (System Integration: Use Cases vs. Database)
 
-## 📖 نبذة عن المشروع
+#### أ. إدارة المستخدمين والمصادقة (Authentication & Profiles)
+*   **حالة الاستخدام:** `Sign up/Log in` و `Profile management`.
+*   **قاعدة البيانات:** يتم التعامل معها عبر جدول `Users` المركزي (الذي يحدد الـ Role سواء كان `teacher` أو `student`). تفاصيل الملف الشخصي مفصولة بذكاء في جدولي `Teachers` و `Students` بعلاقة 1:1، وهذا تصميم ممتاز لقابلية التوسع (Scalability).
 
-مشروع تخرج يهدف إلى بناء **منصة تعليمية ذكية متكاملة** تعتمد على تقنيات الذكاء الاصطناعي لمساعدة الطلاب في تنظيم دراستهم، فهم المحتوى العلمي، وإدارة وقتهم بفعالية.
+#### ب. لوحة تحكم الأستاذ (Teacher Dashboard)
+*   **حالة الاستخدام:** `Courses management` (إضافة، تعديل، حذف) و `Quizzes management` (إضافة، تعديل، حذف).
+*   **قاعدة البيانات:** 
+    *   الأساتذة يديرون المقررات عبر جدول `Courses` والمحاضرات عبر جدول `Lectures`.
+    *   **الذكاء الاصطناعي (Automated Quiz Generation):** بناءً على ملاحظتك، حالة `generate quiz from uploaded data` ترتبط بعلاقة `extend` مع `add quiz`. برمجياً، هذا يعني أنه عند إنشاء اختبار جديد، يمكن للأستاذ إدخال الأسئلة يدوياً، **أو** استدعاء محرك الذكاء الاصطناعي (AI-engine). المحرك سيأخذ النص من حقل `content_text` في جدول `Lectures`، ويقوم بتوليد أسئلة تُحفظ تلقائياً في جداول `Questions` و `Question_Options`. الحقل `is_ai_generated` في جدول `Quizzes` سيوثق أن هذا الاختبار تم إنشاؤه آلياً.
 
----
+#### ج. بوابة الطالب (Student Portal)
+*   **حالة الاستخدام:** `Sign up for course` و `Do test` و `Review answers and score`.
+*   **قاعدة البيانات:** 
+    *   تسجيل الطلاب يتم عبر جدول `Course_Enrollments`.
+    *   أداء الاختبارات يُسجل في جدول `Student_Quiz_Attempts` (لتتبع المحاولة والدرجة النهائية وحالة الاختبار in_progress/submitted).
+    *   إجابات الطالب الدقيقة تُسجل في جدول `Student_Answers` مما يتيح له مراجعة إجاباته لاحقاً ومقارنتها بالإجابة الصحيحة.
 
-## 🛠️ التقنيات المستخدمة
-
-| التقنية | الوظيفة |
-|---------|---------|
-| **Laravel** | إطار العمل الرئيسي (Backend) |
-| **Blade** | محرك القوالب |
-| **MySQL** | قاعدة البيانات |
-| **OpenAI API** | محرك الذكاء الاصطناعي |
-| **HTML/CSS/JS** | الواجهة الأمامية |
-
----
-
-## ✨ الميزات الرئيسية
-
-### 1. 📝 نظام التلخيص الذكي
-- رفع ملفات PDF أو نصوص دراسية
-- تلخيص تلقائي باستخدام الذكاء الاصطناعي
-- تحديد مستوى التلخيص (مختصر / متوسط / مفصّل)
-
-### 2. 🤖 المساعد التعليمي الذكي
-- إجابة فورية على أسئلة الطالب
-- توليد مسائل وتمارين تدريبية مخصصة
-- دعم أنواع أسئلة متعددة
-
-### 3. ✅ قائمة المهام الذكية
-- إدارة المهام مع تحديد الأولويات تلقائياً
-- تصنيف حسب المادة والأهمية والموعد
-- تتبع التقدم
-
-### 4. 📅 مخطط المذاكرة الأسبوعي
-- جدول مذاكرة متوازن تلقائياً
-- مبني على المواد ومواعيد الاختبارات وصعوبة كل مادة
-- مراعاة أوقات الراحة
-
-### 5. 🚨 وضع الأزمة (Crisis Mode)
-- تفعّل تلقائياً عند اقتراب الامتحانات
-- إعادة ترتيب الأولويات فوراً
-- تنبيهات ملحة مع خطة مذاكرة مكثفة
-
-### 6. 🎨 واجهة استخدام بسيطة
-- لوحة تحكم شاملة (Dashboard)
-- متجاوبة مع جميع الشاشات
+#### د. محرك الذكاء الاصطناعي (AI-Engine)
+*   **حالة الاستخدام:** `summarize uploaded data` ترتبط بعلاقة `extend` مع `request AI summarize`.
+*   **التطبيق البرمجي:** عندما يطلب الطالب تلخيص المحاضرة، يقوم النظام بإرسال محتوى المحاضرة `Lectures.content_text` إلى واجهة برمجة تطبيقات الذكاء الاصطناعي (مثل OpenAI API)، والتي تعود بالخلاصة المركزة للطالب.
 
 ---
 
-## 📐 هيكل النظام
+### 2. ملاحظات وتوصيات برمجية هامة (للتعديل على الـ DBML):
 
-```
-┌─────────────────────────────────────────────────┐
-│                  واجهة المستخدم                   │
-│              (Blade + Frontend)                  │
-├─────────────────────────────────────────────────┤
-│               Laravel Backend                    │
-│  ┌───────────┐ ┌───────────┐ ┌───────────────┐  │
-│  │  Auth &    │ │  Task &   │ │   AI Engine   │  │
-│  │  Users     │ │  Schedule │ │  (OpenAI API) │  │
-│  └───────────┘ └───────────┘ └───────────────┘  │
-├─────────────────────────────────────────────────┤
-│               MySQL Database                     │
-└─────────────────────────────────────────────────┘
+تصميمك ممتاز، ولكن بناءً على خبرتي لتجنب مشاكل لاحقاً في مرحلة الـ (Backend)، أنصحك بإجراء **تعديلين بسيطين جداً** على الكود الخاص بك:
+
+**الملاحظة الأولى (مهمة جداً - نسيت استخدام الـ Enum):**
+أنت قمت بتعريف `Enum QuizStatus { draft, published }` في أعلى الكود، ولكنك **نسيت استخدامه** داخل جدول `Quizzes`. هذا الحقل مهم جداً لأن الأستاذ قد يولد الاختبار بالذكاء الاصطناعي ويحتاج لمراجعته (draft) قبل نشره للطلاب (published).
+*   **التعديل:** أضف الحقل لجدول `Quizzes`.
+
+**الملاحظة الثانية (لتقليل تكلفة الذكاء الاصطناعي وتوفير الوقت):**
+بخصوص ميزة `AI Summarization` للطالب، إذا طلب 100 طالب تلخيص نفس المحاضرة، سيقوم النظام باستدعاء الذكاء الاصطناعي 100 مرة (مما يعني تكلفة مالية عالية وبطء في الاستجابة).
+*   **الحل الأفضل:** إضافة حقل `ai_summary` في جدول `Lectures`. عندما يطلب أول طالب التلخيص، يتم توليده وحفظه في هذا الحقل. وأي طالب آخر يطلب التلخيص، يتم عرض النص المحفوظ مباشرة من قاعدة البيانات دون الحاجة لإعادة التوليد.
+
+**إليك شكل جدول Quizzes وجدول Lectures بعد إضافة هذه التحسينات البسيطة:**
+
+```dbml
+// جدول المحاضرات
+Table Lectures {
+  id           int [pk, increment]
+  course_id    int [ref: > Courses.id]
+  title        varchar
+  content_text text
+  ai_summary   text [note: "يحفظ التلخيص المولد آلياً لتقليل استدعاء الـ API"] // تم الإضافة هنا
+  file_url     varchar
+  video_url    varchar
+  img_url      varchar
+  order_index  int
+  created_at   timestamp
+  updated_at   timestamp
+}
+
+// جدول الاختبارات — علاقة 1:1 مع Lecture
+Table Quizzes {
+  id              int [pk, increment]
+  lecture_id      int [ref: - Lectures.id]
+  title           varchar
+  status          QuizStatus [default: 'draft'] // تم استخدام الـ Enum هنا
+  is_ai_generated boolean [default: true]
+  
+  start_time      timestamp
+  end_time        timestamp
+  duration        int [note: "بالدقائق"]
+  created_at      timestamp
+  updated_at      timestamp
+}
 ```
 
----
+### الخلاصة للمرحلة القادمة:
+أنت الآن تمتلك أساساً متيناً جداً (UML واضح + ERD دقيق). يمكنك الآن الانتقال مباشرة إلى:
+1.  **بناء الـ Backend:** باستخدام إطارات عمل مثل Node.js (Express/NestJS) أو Python (Django/FastAPI) نظراً لسهولة دمج الـ AI مع بايثون.
+2.  **تصميم الـ Prompts (هندسة التلقين):** تجهيز الأوامر التي سيتم إرسالها لنموذج الذكاء الاصطناعي (مثلاً: *"استخرج 10 أسئلة اختيار من متعدد من هذا النص مع تحديد الإجابة الصحيحة بصيغة JSON"*).
 
-## 📋 خطة العمل التفصيلية | Work Plan
+هل ترغب في أن أكتب لك كيف سيكون شكل الـ (JSON Response) القادم من الذكاء الاصطناعي والذي سيتم إدخاله مباشرة في جداول الأسئلة والخيارات؟
 
-### المرحلة 1: التحليل والتخطيط (الأسبوع 1-2)
-
-| المهمة | التفاصيل | المخرجات |
-|--------|---------|---------|
-| دراسة المشكلة | تحليل صعوبات الطلاب في التنظيم والفهم | وثيقة تحليل المشكلة |
-| جمع المتطلبات | تحديد الميزات المطلوبة من المنصة | قائمة المتطلبات (SRS) |
-| دراسة الحلول المشابهة | مراجعة منصات تعليمية موجودة | جدول مقارنة |
-| تحديد نطاق المشروع | تحديد ما سيتم تنفيذه وما سيُستبعد | وثيقة النطاق |
-
-### المرحلة 2: التصميم (الأسبوع 3-4)
-
-| المهمة | التفاصيل | المخرجات |
-|--------|---------|---------|
-| تصميم قاعدة البيانات | بناء ER Diagram وتعريف الجداول والعلاقات | ER Diagram + Migration Files |
-| تصميم الـ API | تحديد endpoints والـ requests/responses | توثيق API |
-| تصميم الواجهات | رسم Wireframes لكل صفحة | UI Mockups |
-| تصميم هيكل Laravel | تنظيم Controllers, Models, Services | مخطط المجلدات |
-
-### المرحلة 3: تطوير الذكاء الاصطناعي (الأسبوع 5-7)
-
-| المهمة | التفاصيل | المخرجات |
-|--------|---------|---------|
-| ربط OpenAI API | إعداد الاتصال والتوثيق مع OpenAI | AIService.php |
-| بناء نظام التلخيص | استخراج نص من PDF ثم إرسال لـ AI ثم تلخيص | SummaryService.php |
-| تطوير المساعد الذكي | محادثة ذكية تجيب عن أسئلة الطالب | AssistantService.php |
-| توليد الأسئلة | إنشاء مسائل تدريبية مخصصة حسب المادة | QuestionGenerator.php |
-| ضبط الـ Prompts | كتابة prompts دقيقة لكل وظيفة | ملف Prompts مُوثّق |
-
-### المرحلة 4: بناء النظام الأساسي (الأسبوع 8-11)
-
-| المهمة | التفاصيل | المخرجات |
-|--------|---------|---------|
-| نظام المصادقة | تسجيل، دخول، استعادة كلمة مرور | Auth System |
-| لوحة التحكم | Dashboard يعرض ملخص حالة الطالب | Dashboard View |
-| قائمة المهام | CRUD للمهام + تصنيف + أولويات | Task System |
-| مخطط المذاكرة | خوارزمية إنشاء جدول أسبوعي ذكي | Schedule Generator |
-| وضع الأزمة | كشف اقتراب الامتحانات + تنبيهات | Crisis Mode Logic |
-| رفع الملفات | رفع PDF وتخزينها ومعالجتها | File Upload System |
-
-### المرحلة 5: الاختبار والتحسين (الأسبوع 12-13)
-
-| المهمة | التفاصيل | المخرجات |
-|--------|---------|---------|
-| اختبار وظيفي | تجربة كل ميزة والتأكد من عملها | تقرير اختبار |
-| اختبار الأداء | فحص سرعة الاستجابة والتحمل | تقرير أداء |
-| اختبار تجربة المستخدم | تجربة الواجهة وجمع الملاحظات | تحسينات UI/UX |
-| إصلاح الأخطاء | معالجة الـ bugs المكتشفة | نظام مستقر |
-
-### المرحلة 6: التسليم والتوثيق (الأسبوع 14)
-
-| المهمة | التفاصيل | المخرجات |
-|--------|---------|---------|
-| التوثيق النهائي | كتابة شرح كامل للنظام | دليل المستخدم + دليل المطور |
-| التقرير النهائي | إعداد تقرير التخرج | تقرير التخرج |
-| العرض التقديمي | تجهيز عرض توضيحي للمشروع | Presentation |
-| التسليم | رفع النهائي على GitHub | كود نهائي |
 
 ---
 
-## 📁 هيكل المجلدات المتوقع
 
-```
-app/
-├── Http/Controllers/
-│   ├── AuthController.php
-│   ├── SummaryController.php
-│   ├── AssistantController.php
-│   ├── TaskController.php
-│   ├── ScheduleController.php
-│   └── DashboardController.php
-├── Services/
-│   ├── AIService.php
-│   ├── SummaryService.php
-│   └── ScheduleGenerator.php
-└── Models/
-    ├── User.php
-    ├── Task.php
-    ├── StudyPlan.php
-    ├── Subject.php
-    └── Summary.php
-```
+
+
+
+أهلاً بك. بما أنك تبدأ في عالم Laravel ولا تمتلك خبرة مسبقة فيه، فقد صممت لك **خطة تنفيذية (Implementation Plan) شاملة ومبسطة جداً**، تأخذ بيدك خطوة بخطوة من الصفر وحتى إطلاق المشروع، مع دمج ذكاء Google Gemini Flash API.
+
+إطار عمل Laravel يعتمد على معمارية **MVC** (Model-View-Controller)، وبتبسيط شديد:
+*   **Model (M):** يتعامل مع قاعدة البيانات (الجداول التي صممناها).
+*   **View (V):** واجهة المستخدم (ما يراه الطالب والأستاذ).
+*   **Controller (C):** العقل المدبر الذي يربط بين الواجهة وقاعدة البيانات (وهنا سنضع أكواد الذكاء الاصطناعي).
+
+إليك الخطة التفصيلية:
 
 ---
 
-## ⚙️ التثبيت والتشغيل
+### المرحلة الأولى: التجهيز والإعداد (Preparation)
+
+بما أنك لا تعرف Laravel، يجب تثبيت بعض الأدوات الأساسية على جهازك:
+1.  **تثبيت XAMPP أو Laragon:** لتشغيل خادم محلي (Localhost) وقاعدة بيانات MySQL.
+2.  **تثبيت Composer:** وهو مدير الحزم للغة PHP (ضروري لتحميل Laravel).
+3.  **إنشاء المشروع:**
+    *   افتح موجه الأوامر (CMD أو Terminal).
+    *   اكتب الأمر التالي لإنشاء مشروع Laravel جديد باسم `learning-platform`:
+        ```bash
+        composer create-project laravel/laravel learning-platform
+        ```
+    *   ادخل إلى مجلد المشروع:
+        ```bash
+        cd learning-platform
+        ```
+4.  **ربط قاعدة البيانات:**
+    *   افتح برنامج XAMPP وشغّل (Apache و MySQL).
+    *   اذهب إلى `http://localhost/phpmyadmin` وأنشئ قاعدة بيانات جديدة باسم `learning_db`.
+    *   في مجلد مشروعك، ابحث عن ملف اسمه `.env` (هذا ملف الإعدادات). افتحه وعدّل هذه الأسطر لتتوافق مع قاعدة بياناتك:
+        ```env
+        DB_CONNECTION=mysql
+        DB_HOST=127.0.0.1
+        DB_PORT=3306
+        DB_DATABASE=learning_db
+        DB_USERNAME=root
+        DB_PASSWORD=
+        ```
+
+---
+
+### المرحلة الثانية: بناء قاعدة البيانات (Migrations & Models)
+
+في Laravel، لا ننشئ الجداول يدوياً، بل نكتب أوامر (Migrations) تقوم بذلك.
+في الـ Terminal، اكتب الأوامر التالية لإنشاء "النماذج Models" و "ملفات التهيئة Migrations" بناءً على مخطط DBML الخاص بك:
 
 ```bash
-git clone https://github.com/ramaturkmeni/AiPoweredSmartLearningPlatform02.git
-cd AiPoweredSmartLearningPlatform02
-composer install
-npm install
-cp .env.example .env
-php artisan key:generate
+php artisan make:model Teacher -m
+php artisan make:model Student -m
+php artisan make:model Course -m
+php artisan make:model Lecture -m
+php artisan make:model Quiz -m
+php artisan make:model Question -m
+php artisan make:model QuestionOption -m
+```
+
+**كيف تكتب داخل ملفات الـ Migration؟**
+اذهب إلى مسار `database/migrations` ستجد ملفات بتاريخ اليوم. سأعطيك مثالاً على جدول المحاضرات (Lecture) الذي أضفنا له حقل `ai_summary` بناءً على نقاشنا السابق.
+افتح ملف الـ `create_lectures_table.php` واكتب بداخله:
+
+```php
+public function up()
+{
+    Schema::create('lectures', function (Blueprint $table) {
+        $table->id();
+        $table->foreignId('course_id')->constrained('courses')->onDelete('cascade');
+        $table->string('title');
+        $table->longText('content_text')->nullable();
+        $table->longText('ai_summary')->nullable(); // حقل التلخيص الآلي
+        $table->string('file_url')->nullable();
+        $table->timestamps();
+    });
+}
+```
+*قم بتطبيق نفس المنطق على باقي الجداول بناءً على ملف DBML الذي تمتلكه.*
+بعد الانتهاء من كتابة كل الجداول، نفذ هذا الأمر لرفعها إلى قاعدة البيانات:
+```bash
 php artisan migrate
-# أضف OPENAI_API_KEY في .env
-php artisan serve
 ```
 
 ---
 
-<p align="center">
-  <strong>🧠 منصة التعلّم الذكي — لأن كل طالب يستحق أدوات ذكية</strong>
-</p>
+### المرحلة الثالثة: دمج الذكاء الاصطناعي (Gemini Flash API) 🧠
+
+هذه هي الميزة الأساسية في مشروعك. سنستخدم موديل `gemini-1.5-flash` لأنه سريع جداً وممتاز في التلخيص واستخراج البيانات (ومجاني للتجارب).
+
+**الخطوة 1: الحصول على مفتاح API**
+1. اذهب إلى Google AI Studio.
+2. أنشئ API Key جديد.
+3. افتح ملف `.env` في مشروعك وأضف هذا السطر في آخره:
+   ```env
+   GEMINI_API_KEY=ضع_المفتاح_هنا
+   ```
+
+**الخطوة 2: إنشاء خدمة الذكاء الاصطناعي (Service)**
+لكي يكون كودك مرتباً، سننشئ ملفاً مخصصاً للتواصل مع Gemini.
+1. في مجلد `app`، أنشئ مجلداً جديداً باسم `Services`.
+2. داخله، أنشئ ملفاً باسم `GeminiService.php`.
+3. انسخ هذا الكود بالكامل وضعه فيه (هذا الكود جاهز للتحدث مع قوقل):
+
+```php
+<?php
+
+namespace App\Services;
+
+use Illuminate\Support\Facades\Http;
+
+class GeminiService
+{
+    protected $apiUrl;
+    protected $apiKey;
+
+    public function __construct()
+    {
+        $this->apiKey = env('GEMINI_API_KEY');
+        // نستخدم موديل flash لأنه الأسرع والأفضل لهكذا مهام
+        $this->apiUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=' . $this->apiKey;
+    }
+
+    // دالة التلخيص للطالب
+    public function summarizeText($text)
+    {
+        $prompt = "قم بتلخيص النص الأكاديمي التالي بشكل دقيق ومبسط للطلاب في شكل نقاط رئيسية:\n\n" . $text;
+        
+        return $this->callGemini($prompt);
+    }
+
+    // دالة توليد الاختبار للأستاذ
+    public function generateQuiz($text, $numberOfQuestions = 5)
+    {
+        $prompt = "بناءً على النص الأكاديمي التالي، قم بإنشاء $numberOfQuestions أسئلة اختيار من متعدد (MCQ). 
+        يجب أن يكون الرد بصيغة JSON فقط بهذا الشكل المطابق تماماً دون أي إضافات أو علامات markdown:[
+            {
+                'question_text': 'نص السؤال هنا',
+                'options':[
+                    {'option_text': 'الخيار الأول', 'is_correct': true},
+                    {'option_text': 'الخيار الثاني', 'is_correct': false},
+                    {'option_text': 'الخيار الثالث', 'is_correct': false},
+                    {'option_text': 'الخيار الرابع', 'is_correct': false}
+                ]
+            }
+        ]
+        النص:\n" . $text;
+
+        $response = $this->callGemini($prompt);
+        
+        // تنظيف الرد من علامات ```json التي قد يرسلها الذكاء الاصطناعي
+        $cleanedResponse = str_replace(['```json', '```'], '', $response);
+        return json_decode($cleanedResponse, true); // تحويل النص إلى مصفوفة برمجية
+    }
+
+    // دالة الاتصال بـ API
+    private function callGemini($prompt)
+    {
+        $response = Http::post($this->apiUrl, [
+            'contents' => [
+                ['parts' => [['text' => $prompt]]]
+            ]
+        ]);
+
+        if ($response->successful()) {
+            return $response->json('candidates.0.content.parts.0.text');
+        }
+        return null;
+    }
+}
+```
+
+---
+
+### المرحلة الرابعة: ربط الواجهات بالمنطق (Controllers)
+
+الآن سنقوم بإنشاء العقل المدبر الذي يستقبل طلب الطالب والأستاذ ويستدعي خدمة Gemini.
+في الـ Terminal:
+```bash
+php artisan make:controller AIController
+```
+
+اذهب إلى `app/Http/Controllers/AIController.php` واكتب التالي:
+
+```php
+<?php
+
+namespace App\Http\Controllers;
+
+use Illuminate\Http\Request;
+use App\Models\Lecture;
+use App\Models\Quiz;
+use App\Models\Question;
+use App\Models\QuestionOption;
+use App\Services\GeminiService;
+
+class AIController extends Controller
+{
+    protected $geminiService;
+
+    // استدعاء خدمة الذكاء الاصطناعي
+    public function __construct(GeminiService $geminiService)
+    {
+        $this->geminiService = $geminiService;
+    }
+
+    // وظيفة: تلخيص المحاضرة (Use Case: Request AI Summarize)
+    public function summarizeLecture($lectureId)
+    {
+        $lecture = Lecture::findOrFail($lectureId);
+
+        // التحقق مما إذا كان التلخيص موجوداً مسبقاً (لتوفير التكلفة والوقت كما اتفقنا)
+        if ($lecture->ai_summary) {
+            return response()->json(['summary' => $lecture->ai_summary]);
+        }
+
+        // إذا لم يكن موجوداً، نطلبه من Gemini
+        $summary = $this->geminiService->summarizeText($lecture->content_text);
+        
+        // حفظ التلخيص في قاعدة البيانات
+        $lecture->update(['ai_summary' => $summary]);
+
+        return response()->json(['summary' => $summary]);
+    }
+
+    // وظيفة: التوليد التلقائي للاختبار (Use Case: Generate quiz from uploaded data)
+    public function generateQuizForLecture(Request $request, $lectureId)
+    {
+        $lecture = Lecture::findOrFail($lectureId);
+        
+        // استدعاء Gemini لإنشاء الأسئلة بصيغة JSON
+        $quizData = $this->geminiService->generateQuiz($lecture->content_text, 5); // 5 أسئلة مثلاً
+
+        if(!$quizData) {
+            return response()->json(['error' => 'فشل توليد الاختبار'], 500);
+        }
+
+        // 1. إنشاء الاختبار (Draft) في جدول Quizzes
+        $quiz = Quiz::create([
+            'lecture_id' => $lecture->id,
+            'title' => 'اختبار الذكاء الاصطناعي: ' . $lecture->title,
+            'status' => 'draft',
+            'is_ai_generated' => true,
+            'duration' => 15
+        ]);
+
+        // 2. إدخال الأسئلة والخيارات في قاعدة البيانات
+        foreach ($quizData as $qData) {
+            $question = Question::create([
+                'quiz_id' => $quiz->id,
+                'question_text' => $qData['question_text']
+            ]);
+
+            foreach ($qData['options'] as $optData) {
+                QuestionOption::create([
+                    'question_id' => $question->id,
+                    'option_text' => $optData['option_text'],
+                    'is_correct' => $optData['is_correct']
+                ]);
+            }
+        }
+
+        return response()->json([
+            'message' => 'تم إنشاء الاختبار بنجاح، وهو الآن في المسودات',
+            'quiz_id' => $quiz->id
+        ]);
+    }
+}
+```
+
+---
+
+### المرحلة الخامسة: إنشاء الروابط (Routes)
+
+لكي يتمكن النظام من الوصول إلى الدوال التي برمجناها، يجب تحديد "عناوين URL" لها.
+افتح ملف `routes/web.php` (أو `routes/api.php` إذا كنت تبني تطبيق موبايل/React)، وأضف:
+
+```php
+use App\Http\Controllers\AIController;
+
+// رابط للطالب لطلب التلخيص
+Route::get('/lecture/{id}/summarize',[AIController::class, 'summarizeLecture']);
+
+// رابط للأستاذ لتوليد الاختبار آلياً
+Route::post('/lecture/{id}/generate-quiz', [AIController::class, 'generateQuizForLecture']);
+```
+
+---
+
+### كيف تبدأ التطبيق العملي كشخص مبتدئ؟ (خلاصة سريعة)
+
+1.  **لا تحاول فهم كل الكود دفعة واحدة:** ابدأ بنسخ ولصق أوامر الـ `Terminal` بالترتيب.
+2.  **ركز على قاعدة البيانات أولاً:** تأكد أن الجداول ظهرت في `phpMyAdmin` بشكل صحيح.
+3.  **جرب الـ AI:** بعد كتابة ملف `GeminiService.php` وملف `AIController.php`، قم بإضافة محاضرة يدوياً (وهمية) في قاعدة البيانات (في جدول `Lectures`) واكتب أي مقال طويل في حقل `content_text`.
+4.  قم بتشغيل السيرفر عن طريق كتابة:
+    ```bash
+    php artisan serve
+    ```
+5.  اذهب للمتصفح واكتب: `http://localhost:8000/lecture/1/summarize` (بافتراض أن رقم المحاضرة 1). ستشاهد سحر الـ Gemini يعيد لك التلخيص!
+
+هل الشرح واضح بالنسبة لك بهذا التسلسل؟ إذا كنت مستعداً، ابدأ بتنفيذ (المرحلة الأولى والثانية) وأخبرني إذا واجهتك أي رسالة خطأ في الـ Terminal لنقوم بحلها معاً.
+
