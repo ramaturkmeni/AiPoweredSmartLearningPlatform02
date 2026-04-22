@@ -1,2866 +1,399 @@
-ممتاز جداً. بناءً على الوصف المعماري للمشروع، ومخططات حالات الاستخدام (Use Case Diagrams)، وتصميم قاعدة البيانات (ERD) الذي قمت بإرفاقه، يمكن القول أن **البنية التحتية لمشروعك ممتازة ومترابطة بشكل منطقي واحترافي.**
+# 🎓 AI-Powered Smart Learning Platform
 
-لقد قمت بمطابقة متطلباتك ومخطط Use Case مع الجداول (DBML)، وإليك تحليل شامل لكيفية عمل النظام برمجياً بناءً على معطياتك، مع بعض الملاحظات التقنية الدقيقة لضمان نجاح التطوير:
-
-### 1. تكامل النظام (System Integration: Use Cases vs. Database)
-
-#### أ. إدارة المستخدمين والمصادقة (Authentication & Profiles)
-*   **حالة الاستخدام:** `Sign up/Log in` و `Profile management`.
-*   **قاعدة البيانات:** يتم التعامل معها عبر جدول `Users` المركزي (الذي يحدد الـ Role سواء كان `teacher` أو `student`). تفاصيل الملف الشخصي مفصولة بذكاء في جدولي `Teachers` و `Students` بعلاقة 1:1، وهذا تصميم ممتاز لقابلية التوسع (Scalability).
-
-#### ب. لوحة تحكم الأستاذ (Teacher Dashboard)
-*   **حالة الاستخدام:** `Courses management` (إضافة، تعديل، حذف) و `Quizzes management` (إضافة، تعديل، حذف).
-*   **قاعدة البيانات:** 
-    *   الأساتذة يديرون المقررات عبر جدول `Courses` والمحاضرات عبر جدول `Lectures`.
-    *   **الذكاء الاصطناعي (Automated Quiz Generation):** بناءً على ملاحظتك، حالة `generate quiz from uploaded data` ترتبط بعلاقة `extend` مع `add quiz`. برمجياً، هذا يعني أنه عند إنشاء اختبار جديد، يمكن للأستاذ إدخال الأسئلة يدوياً، **أو** استدعاء محرك الذكاء الاصطناعي (AI-engine). المحرك سيأخذ النص من حقل `content_text` في جدول `Lectures`، ويقوم بتوليد أسئلة تُحفظ تلقائياً في جداول `Questions` و `Question_Options`. الحقل `is_ai_generated` في جدول `Quizzes` سيوثق أن هذا الاختبار تم إنشاؤه آلياً.
-
-#### ج. بوابة الطالب (Student Portal)
-*   **حالة الاستخدام:** `Sign up for course` و `Do test` و `Review answers and score`.
-*   **قاعدة البيانات:** 
-    *   تسجيل الطلاب يتم عبر جدول `Course_Enrollments`.
-    *   أداء الاختبارات يُسجل في جدول `Student_Quiz_Attempts` (لتتبع المحاولة والدرجة النهائية وحالة الاختبار in_progress/submitted).
-    *   إجابات الطالب الدقيقة تُسجل في جدول `Student_Answers` مما يتيح له مراجعة إجاباته لاحقاً ومقارنتها بالإجابة الصحيحة.
-
-#### د. محرك الذكاء الاصطناعي (AI-Engine)
-*   **حالة الاستخدام:** `summarize uploaded data` ترتبط بعلاقة `extend` مع `request AI summarize`.
-*   **التطبيق البرمجي:** عندما يطلب الطالب تلخيص المحاضرة، يقوم النظام بإرسال محتوى المحاضرة `Lectures.content_text` إلى واجهة برمجة تطبيقات الذكاء الاصطناعي (مثل OpenAI API)، والتي تعود بالخلاصة المركزة للطالب.
+> منصة تعليمية ذكية مبنية بـ Laravel 12 + Anthropic Claude AI، تدعم دورين (أستاذ / طالب) مع نظام مصادقة متعدد الأدوار، إدارة مقررات ومحاضرات، وتوليد اختبارات آلياً بالذكاء الاصطناعي.
 
 ---
 
-### 2. ملاحظات وتوصيات برمجية هامة (للتعديل على الـ DBML):
+## 📊 معلومات المشروع
 
-تصميمك ممتاز، ولكن بناءً على خبرتي لتجنب مشاكل لاحقاً في مرحلة الـ (Backend)، أنصحك بإجراء **تعديلين بسيطين جداً** على الكود الخاص بك:
+| البند | التفاصيل |
+|-------|----------|
+| **الإطار** | Laravel 12 (PHP 8.2+) |
+| **قاعدة البيانات** | MySQL |
+| **الذكاء الاصطناعي** | Anthropic Claude API (claude-sonnet-4-20250514) |
+| **الواجهة** | Blade Templates + Vite |
+| **المصادقة** | نظام مخصص (Username + Password + Role) |
 
-**الملاحظة الأولى (مهمة جداً - نسيت استخدام الـ Enum):**
-أنت قمت بتعريف `Enum QuizStatus { draft, published }` في أعلى الكود، ولكنك **نسيت استخدامه** داخل جدول `Quizzes`. هذا الحقل مهم جداً لأن الأستاذ قد يولد الاختبار بالذكاء الاصطناعي ويحتاج لمراجعته (draft) قبل نشره للطلاب (published).
-*   **التعديل:** أضف الحقل لجدول `Quizzes`.
+---
 
-**الملاحظة الثانية (لتقليل تكلفة الذكاء الاصطناعي وتوفير الوقت):**
-بخصوص ميزة `AI Summarization` للطالب، إذا طلب 100 طالب تلخيص نفس المحاضرة، سيقوم النظام باستدعاء الذكاء الاصطناعي 100 مرة (مما يعني تكلفة مالية عالية وبطء في الاستجابة).
-*   **الحل الأفضل:** إضافة حقل `ai_summary` في جدول `Lectures`. عندما يطلب أول طالب التلخيص، يتم توليده وحفظه في هذا الحقل. وأي طالب آخر يطلب التلخيص، يتم عرض النص المحفوظ مباشرة من قاعدة البيانات دون الحاجة لإعادة التوليد.
+## 🏗️ المعمارية
 
-**إليك شكل جدول Quizzes وجدول Lectures بعد إضافة هذه التحسينات البسيطة:**
+المشروع يعتمد على بنية **MVC** مع فصل الأدوار (Teacher/Student) في مجلدات مستقلة:
 
-```dbml
-// جدول المحاضرات
-Table Lectures {
-  id           int [pk, increment]
-  course_id    int [ref: > Courses.id]
-  title        varchar
-  content_text text
-  ai_summary   text [note: "يحفظ التلخيص المولد آلياً لتقليل استدعاء الـ API"] // تم الإضافة هنا
-  file_url     varchar
-  video_url    varchar
-  img_url      varchar
-  order_index  int
-  created_at   timestamp
-  updated_at   timestamp
-}
-
-// جدول الاختبارات — علاقة 1:1 مع Lecture
-Table Quizzes {
-  id              int [pk, increment]
-  lecture_id      int [ref: - Lectures.id]
-  title           varchar
-  status          QuizStatus [default: 'draft'] // تم استخدام الـ Enum هنا
-  is_ai_generated boolean [default: true]
-  
-  start_time      timestamp
-  end_time        timestamp
-  duration        int [note: "بالدقائق"]
-  created_at      timestamp
-  updated_at      timestamp
-}
 ```
-
-### الخلاصة للمرحلة القادمة:
-أنت الآن تمتلك أساساً متيناً جداً (UML واضح + ERD دقيق). يمكنك الآن الانتقال مباشرة إلى:
-1.  **بناء الـ Backend:** باستخدام إطارات عمل مثل Node.js (Express/NestJS) أو Python (Django/FastAPI) نظراً لسهولة دمج الـ AI مع بايثون.
-2.  **تصميم الـ Prompts (هندسة التلقين):** تجهيز الأوامر التي سيتم إرسالها لنموذج الذكاء الاصطناعي (مثلاً: *"استخرج 10 أسئلة اختيار من متعدد من هذا النص مع تحديد الإجابة الصحيحة بصيغة JSON"*).
-
-هل ترغب في أن أكتب لك كيف سيكون شكل الـ (JSON Response) القادم من الذكاء الاصطناعي والذي سيتم إدخاله مباشرة في جداول الأسئلة والخيارات؟
-
-
----
-
-
-
-
-
-أهلاً بك. بما أنك تبدأ في عالم Laravel ولا تمتلك خبرة مسبقة فيه، فقد صممت لك **خطة تنفيذية (Implementation Plan) شاملة ومبسطة جداً**، تأخذ بيدك خطوة بخطوة من الصفر وحتى إطلاق المشروع، مع دمج ذكاء Google Gemini Flash API.
-
-إطار عمل Laravel يعتمد على معمارية **MVC** (Model-View-Controller)، وبتبسيط شديد:
-*   **Model (M):** يتعامل مع قاعدة البيانات (الجداول التي صممناها).
-*   **View (V):** واجهة المستخدم (ما يراه الطالب والأستاذ).
-*   **Controller (C):** العقل المدبر الذي يربط بين الواجهة وقاعدة البيانات (وهنا سنضع أكواد الذكاء الاصطناعي).
-
-إليك الخطة التفصيلية:
-
----
-
-### المرحلة الأولى: التجهيز والإعداد (Preparation)
-
-بما أنك لا تعرف Laravel، يجب تثبيت بعض الأدوات الأساسية على جهازك:
-1.  **تثبيت XAMPP أو Laragon:** لتشغيل خادم محلي (Localhost) وقاعدة بيانات MySQL.
-2.  **تثبيت Composer:** وهو مدير الحزم للغة PHP (ضروري لتحميل Laravel).
-3.  **إنشاء المشروع:**
-    *   افتح موجه الأوامر (CMD أو Terminal).
-    *   اكتب الأمر التالي لإنشاء مشروع Laravel جديد باسم `learning-platform`:
-        ```bash
-        composer create-project laravel/laravel learning-platform
-        ```
-    *   ادخل إلى مجلد المشروع:
-        ```bash
-        cd learning-platform
-        ```
-4.  **ربط قاعدة البيانات:**
-    *   افتح برنامج XAMPP وشغّل (Apache و MySQL).
-    *   اذهب إلى `http://localhost/phpmyadmin` وأنشئ قاعدة بيانات جديدة باسم `learning_db`.
-    *   في مجلد مشروعك، ابحث عن ملف اسمه `.env` (هذا ملف الإعدادات). افتحه وعدّل هذه الأسطر لتتوافق مع قاعدة بياناتك:
-        ```env
-        DB_CONNECTION=mysql
-        DB_HOST=127.0.0.1
-        DB_PORT=3306
-        DB_DATABASE=learning_db
-        DB_USERNAME=root
-        DB_PASSWORD=
-        ```
-
----
-
-### المرحلة الثانية: بناء قاعدة البيانات (Migrations & Models)
-
-في Laravel، لا ننشئ الجداول يدوياً، بل نكتب أوامر (Migrations) تقوم بذلك.
-في الـ Terminal، اكتب الأوامر التالية لإنشاء "النماذج Models" و "ملفات التهيئة Migrations" بناءً على مخطط DBML الخاص بك:
-
-```bash
-php artisan make:model Teacher -m
-php artisan make:model Student -m
-php artisan make:model Course -m
-php artisan make:model Lecture -m
-php artisan make:model Quiz -m
-php artisan make:model Question -m
-php artisan make:model QuestionOption -m
-```
-
-**كيف تكتب داخل ملفات الـ Migration؟**
-اذهب إلى مسار `database/migrations` ستجد ملفات بتاريخ اليوم. سأعطيك مثالاً على جدول المحاضرات (Lecture) الذي أضفنا له حقل `ai_summary` بناءً على نقاشنا السابق.
-افتح ملف الـ `create_lectures_table.php` واكتب بداخله:
-
-```php
-public function up()
-{
-    Schema::create('lectures', function (Blueprint $table) {
-        $table->id();
-        $table->foreignId('course_id')->constrained('courses')->onDelete('cascade');
-        $table->string('title');
-        $table->longText('content_text')->nullable();
-        $table->longText('ai_summary')->nullable(); // حقل التلخيص الآلي
-        $table->string('file_url')->nullable();
-        $table->timestamps();
-    });
-}
-```
-*قم بتطبيق نفس المنطق على باقي الجداول بناءً على ملف DBML الذي تمتلكه.*
-بعد الانتهاء من كتابة كل الجداول، نفذ هذا الأمر لرفعها إلى قاعدة البيانات:
-```bash
-php artisan migrate
+learning-platform/
+├── app/
+│   ├── Http/Controllers/
+│   │   ├── Auth/
+│   │   │   └── AuthController.php          # تسجيل + دخول + خروج
+│   │   ├── Teacher/
+│   │   │   ├── DashboardController.php     # لوحة تحكم الأستاذ
+│   │   │   ├── CourseController.php        # CRUD المقررات
+│   │   │   ├── LectureController.php       # CRUD المحاضرات + رفع ملفات
+│   │   │   └── QuizController.php          # توليد اختبارات AI + مراجعة + نشر
+│   │   └── Student/
+│   │       ├── DashboardController.php     # لوحة تحكم الطالب
+│   │       ├── CourseController.php        # عرض المقررات المسجل فيها
+│   │       ├── LectureController.php       # عرض المحاضرات
+│   │       └── QuizController.php          # أداء الاختبارات + عرض النتائج
+│   ├── Models/
+│   │   ├── User.php                        # المستخدم (role: teacher|student)
+│   │   ├── teachers.php                    # بيانات الأستاذ (1:1 مع User)
+│   │   ├── students.php                    # بيانات الطالب (1:1 مع User)
+│   │   ├── courses.php                     # المقررات الدراسية
+│   │   ├── lectures.php                    # المحاضرات
+│   │   ├── quizzes.php                     # الاختبارات
+│   │   ├── questions.php                   # الأسئلة
+│   │   ├── question_options.php            # خيارات الأسئلة (MCQ)
+│   │   ├── course_enrollments.php          # تسجيل الطلاب في المقررات
+│   │   ├── student_quiz_attempts.php       # محاولات الطلاب
+│   │   └── student_answers.php             # إجابات الطلاب
+│   ├── Services/
+│   │   └── AIService.php                   # خدمة Anthropic Claude API
+│   └── Providers/
+├── database/migrations/
+│   ├── 0001_01_01_000000_create_users_table.php
+│   ├── 2026_04_19_160240_create_teachers_table.php
+│   ├── 2026_04_19_161654_create_students_table.php
+│   ├── 2026_04_19_161802_create_courses_table.php
+│   ├── 2026_04_19_161912_create_course_enrollments_table.php
+│   ├── 2026_04_19_162006_create_lectures_table.php
+│   ├── 2026_04_19_162136_create_quizzes_table.php
+│   ├── 2026_04_19_162220_create_questions_table.php
+│   ├── 2026_04_19_162319_create_question_options_table.php
+│   ├── 2026_04_19_162426_create_student_quiz_attempts_table.php
+│   └── 2026_04_19_162613_create_student_answers_table.php
+├── resources/views/
+│   ├── auth/
+│   │   ├── login.blade.php
+│   │   └── register.blade.php
+│   ├── teacher/
+│   │   └── dashboard.blade.php
+│   ├── welcome.blade.php
+│   └── test.blade.php
+├── routes/
+│   └── web.php
+├── composer.json
+├── package.json
+└── vite.config.js
 ```
 
 ---
 
-### المرحلة الثالثة: دمج الذكاء الاصطناعي (Gemini Flash API) 🧠
+## 🗄️ قاعدة البيانات (ERD)
 
-هذه هي الميزة الأساسية في مشروعك. سنستخدم موديل `gemini-1.5-flash` لأنه سريع جداً وممتاز في التلخيص واستخراج البيانات (ومجاني للتجارب).
+### الجداول (11 جدول)
 
-**الخطوة 1: الحصول على مفتاح API**
-1. اذهب إلى Google AI Studio.
-2. أنشئ API Key جديد.
-3. افتح ملف `.env` في مشروعك وأضف هذا السطر في آخره:
-   ```env
-   GEMINI_API_KEY=ضع_المفتاح_هنا
-   ```
+```
+User (1) ─── HasOne ──→ teachers
+     │
+     └── HasOne ──→ students
 
-**الخطوة 2: إنشاء خدمة الذكاء الاصطناعي (Service)**
-لكي يكون كودك مرتباً، سننشئ ملفاً مخصصاً للتواصل مع Gemini.
-1. في مجلد `app`، أنشئ مجلداً جديداً باسم `Services`.
-2. داخله، أنشئ ملفاً باسم `GeminiService.php`.
-3. انسخ هذا الكود بالكامل وضعه فيه (هذا الكود جاهز للتحدث مع قوقل):
+teachers (1) ─── HasMany ──→ courses
 
-```php
-<?php
+courses (1) ─── HasMany ──→ lectures
+    │
+    └── BelongsToMany ──→ students  (عبر course_enrollments)
 
-namespace App\Services;
+lectures (1) ─── HasOne ──→ quizzes
 
-use Illuminate\Support\Facades\Http;
+quizzes (1) ─── HasMany ──→ questions
 
-class GeminiService
-{
-    protected $apiUrl;
-    protected $apiKey;
+questions (1) ─── HasMany ──→ question_options
 
-    public function __construct()
-    {
-        $this->apiKey = env('GEMINI_API_KEY');
-        // نستخدم موديل flash لأنه الأسرع والأفضل لهكذا مهام
-        $this->apiUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=' . $this->apiKey;
-    }
+quizzes (1) ─── HasMany ──→ student_quiz_attempts
 
-    // دالة التلخيص للطالب
-    public function summarizeText($text)
-    {
-        $prompt = "قم بتلخيص النص الأكاديمي التالي بشكل دقيق ومبسط للطلاب في شكل نقاط رئيسية:\n\n" . $text;
-        
-        return $this->callGemini($prompt);
-    }
-
-    // دالة توليد الاختبار للأستاذ
-    public function generateQuiz($text, $numberOfQuestions = 5)
-    {
-        $prompt = "بناءً على النص الأكاديمي التالي، قم بإنشاء $numberOfQuestions أسئلة اختيار من متعدد (MCQ). 
-        يجب أن يكون الرد بصيغة JSON فقط بهذا الشكل المطابق تماماً دون أي إضافات أو علامات markdown:[
-            {
-                'question_text': 'نص السؤال هنا',
-                'options':[
-                    {'option_text': 'الخيار الأول', 'is_correct': true},
-                    {'option_text': 'الخيار الثاني', 'is_correct': false},
-                    {'option_text': 'الخيار الثالث', 'is_correct': false},
-                    {'option_text': 'الخيار الرابع', 'is_correct': false}
-                ]
-            }
-        ]
-        النص:\n" . $text;
-
-        $response = $this->callGemini($prompt);
-        
-        // تنظيف الرد من علامات ```json التي قد يرسلها الذكاء الاصطناعي
-        $cleanedResponse = str_replace(['```json', '```'], '', $response);
-        return json_decode($cleanedResponse, true); // تحويل النص إلى مصفوفة برمجية
-    }
-
-    // دالة الاتصال بـ API
-    private function callGemini($prompt)
-    {
-        $response = Http::post($this->apiUrl, [
-            'contents' => [
-                ['parts' => [['text' => $prompt]]]
-            ]
-        ]);
-
-        if ($response->successful()) {
-            return $response->json('candidates.0.content.parts.0.text');
-        }
-        return null;
-    }
-}
+student_quiz_attempts (1) ─── HasMany ──→ student_answers
 ```
 
----
+### تفاصيل الجداول
 
-### المرحلة الرابعة: ربط الواجهات بالمنطق (Controllers)
-
-الآن سنقوم بإنشاء العقل المدبر الذي يستقبل طلب الطالب والأستاذ ويستدعي خدمة Gemini.
-في الـ Terminal:
-```bash
-php artisan make:controller AIController
-```
-
-اذهب إلى `app/Http/Controllers/AIController.php` واكتب التالي:
-
-```php
-<?php
-
-namespace App\Http\Controllers;
-
-use Illuminate\Http\Request;
-use App\Models\Lecture;
-use App\Models\Quiz;
-use App\Models\Question;
-use App\Models\QuestionOption;
-use App\Services\GeminiService;
-
-class AIController extends Controller
-{
-    protected $geminiService;
-
-    // استدعاء خدمة الذكاء الاصطناعي
-    public function __construct(GeminiService $geminiService)
-    {
-        $this->geminiService = $geminiService;
-    }
-
-    // وظيفة: تلخيص المحاضرة (Use Case: Request AI Summarize)
-    public function summarizeLecture($lectureId)
-    {
-        $lecture = Lecture::findOrFail($lectureId);
-
-        // التحقق مما إذا كان التلخيص موجوداً مسبقاً (لتوفير التكلفة والوقت كما اتفقنا)
-        if ($lecture->ai_summary) {
-            return response()->json(['summary' => $lecture->ai_summary]);
-        }
-
-        // إذا لم يكن موجوداً، نطلبه من Gemini
-        $summary = $this->geminiService->summarizeText($lecture->content_text);
-        
-        // حفظ التلخيص في قاعدة البيانات
-        $lecture->update(['ai_summary' => $summary]);
-
-        return response()->json(['summary' => $summary]);
-    }
-
-    // وظيفة: التوليد التلقائي للاختبار (Use Case: Generate quiz from uploaded data)
-    public function generateQuizForLecture(Request $request, $lectureId)
-    {
-        $lecture = Lecture::findOrFail($lectureId);
-        
-        // استدعاء Gemini لإنشاء الأسئلة بصيغة JSON
-        $quizData = $this->geminiService->generateQuiz($lecture->content_text, 5); // 5 أسئلة مثلاً
-
-        if(!$quizData) {
-            return response()->json(['error' => 'فشل توليد الاختبار'], 500);
-        }
-
-        // 1. إنشاء الاختبار (Draft) في جدول Quizzes
-        $quiz = Quiz::create([
-            'lecture_id' => $lecture->id,
-            'title' => 'اختبار الذكاء الاصطناعي: ' . $lecture->title,
-            'status' => 'draft',
-            'is_ai_generated' => true,
-            'duration' => 15
-        ]);
-
-        // 2. إدخال الأسئلة والخيارات في قاعدة البيانات
-        foreach ($quizData as $qData) {
-            $question = Question::create([
-                'quiz_id' => $quiz->id,
-                'question_text' => $qData['question_text']
-            ]);
-
-            foreach ($qData['options'] as $optData) {
-                QuestionOption::create([
-                    'question_id' => $question->id,
-                    'option_text' => $optData['option_text'],
-                    'is_correct' => $optData['is_correct']
-                ]);
-            }
-        }
-
-        return response()->json([
-            'message' => 'تم إنشاء الاختبار بنجاح، وهو الآن في المسودات',
-            'quiz_id' => $quiz->id
-        ]);
-    }
-}
-```
-
----
-
-### المرحلة الخامسة: إنشاء الروابط (Routes)
-
-لكي يتمكن النظام من الوصول إلى الدوال التي برمجناها، يجب تحديد "عناوين URL" لها.
-افتح ملف `routes/web.php` (أو `routes/api.php` إذا كنت تبني تطبيق موبايل/React)، وأضف:
-
-```php
-use App\Http\Controllers\AIController;
-
-// رابط للطالب لطلب التلخيص
-Route::get('/lecture/{id}/summarize',[AIController::class, 'summarizeLecture']);
-
-// رابط للأستاذ لتوليد الاختبار آلياً
-Route::post('/lecture/{id}/generate-quiz', [AIController::class, 'generateQuizForLecture']);
-```
-
----
-
-### كيف تبدأ التطبيق العملي كشخص مبتدئ؟ (خلاصة سريعة)
-
-1.  **لا تحاول فهم كل الكود دفعة واحدة:** ابدأ بنسخ ولصق أوامر الـ `Terminal` بالترتيب.
-2.  **ركز على قاعدة البيانات أولاً:** تأكد أن الجداول ظهرت في `phpMyAdmin` بشكل صحيح.
-3.  **جرب الـ AI:** بعد كتابة ملف `GeminiService.php` وملف `AIController.php`، قم بإضافة محاضرة يدوياً (وهمية) في قاعدة البيانات (في جدول `Lectures`) واكتب أي مقال طويل في حقل `content_text`.
-4.  قم بتشغيل السيرفر عن طريق كتابة:
-    ```bash
-    php artisan serve
-    ```
-5.  اذهب للمتصفح واكتب: `http://localhost:8000/lecture/1/summarize` (بافتراض أن رقم المحاضرة 1). ستشاهد سحر الـ Gemini يعيد لك التلخيص!
-
-هل الشرح واضح بالنسبة لك بهذا التسلسل؟ إذا كنت مستعداً، ابدأ بتنفيذ (المرحلة الأولى والثانية) وأخبرني إذا واجهتك أي رسالة خطأ في الـ Terminal لنقوم بحلها معاً.
-
----
-
-## 🗃️ شرح تفصيلي للنماذج (Models) والترحيلات (Migrations)
-
-هذا القسم يشرح كل ملف Model و Migration المقابل له، بما يجب أن يحتويه من حقول وعلاقات وكود.
-
----
-
-### 1. 📌 نموذج المستخدم — User
-
-**الملف:** `app/Models/User.php`
-**الترحيل:** `database/migrations/xxxx_create_users_table.php`
-
-#### حقول قاعدة البيانات:
-
+#### `users` — المستخدمون
 | الحقل | النوع | الوصف |
 |-------|------|-------|
 | `id` | bigint (PK) | المعرف الفريد |
-| `name` | string | اسم الطالب الكامل |
+| `username` | string (unique) | اسم المستخدم |
+| `password` | string (hashed) | كلمة المرور |
+| `role` | enum('teacher','student') | الدور |
+| `remember_token` | string | توكن "تذكرني" |
+| `timestamps` | | تاريخ الإنشاء والتحديث |
+
+#### `teachers` — الأساتذة
+| الحقل | النوع | الوصف |
+|-------|------|-------|
+| `id` | bigint (PK) | المعرف الفريد |
+| `user_id` | bigint (FK → users, unique) | ربط 1:1 مع المستخدم |
+| `first_name` | string | الاسم الأول |
+| `last_name` | string | اسم العائلة |
 | `email` | string (unique) | البريد الإلكتروني |
-| `password` | string (hashed) | كلمة المرور (مشفرة بـ bcrypt) |
-| `avatar` | string (nullable) | مسار صورة الملف الشخصي |
-| `university` | string (nullable) | اسم الجامعة |
+| `gender` | enum('male','female') | الجنس |
+| `phone` | string (nullable) | الهاتف |
+| `location` | string (nullable) | الموقع |
+
+#### `students` — الطلاب
+| الحقل | النوع | الوصف |
+|-------|------|-------|
+| `id` | bigint (PK) | المعرف الفريد |
+| `user_id` | bigint (FK → users, unique) | ربط 1:1 مع المستخدم |
+| `first_name` | string | الاسم الأول |
+| `last_name` | string | اسم العائلة |
+| `email` | string (unique) | البريد الإلكتروني |
+| `gender` | enum('male','female') | الجنس |
+| `phone` | string (nullable) | الهاتف |
+| `location` | string (nullable) | الموقع |
 | `major` | string (nullable) | التخصص |
-| `level` | string (nullable) | المستوى الدراسي (سنة أولى، ثانية...) |
-| `email_verified_at` | timestamp (nullable) | وقت تأكيد البريد |
-| `created_at` | timestamp | تاريخ التسجيل |
-| `updated_at` | timestamp | تاريخ آخر تحديث |
 
-#### Migration:
-```php
-Schema::create('users', function (Blueprint $table) {
-    $table->id();
-    $table->string('name');
-    $table->string('email')->unique();
-    $table->timestamp('email_verified_at')->nullable();
-    $table->string('password');
-    $table->string('avatar')->nullable();
-    $table->string('university')->nullable();
-    $table->string('major')->nullable();
-    $table->string('level')->nullable();
-    $table->rememberToken();
-    $table->timestamps();
-});
-```
-
-#### Model — العلاقات:
-```php
-class User extends Authenticatable
-{
-    use HasFactory, Notifiable;
-
-    protected $fillable = [
-        'name', 'email', 'password', 'avatar',
-        'university', 'major', 'level',
-    ];
-
-    protected $hidden = ['password', 'remember_token'];
-
-    // الطالب لديه عدة مواد
-    public function subjects()
-    {
-        return $this->hasMany(Subject::class);
-    }
-
-    // الطالب لديه عدة مهام
-    public function tasks()
-    {
-        return $this->hasMany(Task::class);
-    }
-
-    // الطالب لديه عدة ملخصات
-    public function summaries()
-    {
-        return $this->hasMany(Summary::class);
-    }
-
-    // الطالب لديه عدة خطط دراسية
-    public function studyPlans()
-    {
-        return $this->hasMany(StudyPlan::class);
-    }
-
-    // الطالب لديه عدة اختبارات
-    public function exams()
-    {
-        return $this->hasMany(Exam::class);
-    }
-}
-```
-
----
-
-### 2. 📚 نموذج المادة الدراسية — Subject
-
-**الملف:** `app/Models/Subject.php`
-**الترحيل:** `database/migrations/xxxx_create_subjects_table.php`
-
-#### حقول قاعدة البيانات:
-
+#### `courses` — المقررات
 | الحقل | النوع | الوصف |
 |-------|------|-------|
-| `id` | bigint (PK) | المعرف الفريد |
-| `user_id` | bigint (FK → users) | صاحب المادة (الطالب) |
-| `name` | string | اسم المادة (مثال: "هندسة البرمجيات") |
-| `code` | string (nullable) | رمز المادة (مثال: "CS301") |
-| `color` | string (nullable) | لون تمييز المادة (hex code) |
-| `difficulty` | enum('easy','medium','hard') | مستوى صعوبة المادة |
-| `credit_hours` | integer (nullable) | عدد الساعات المعتمدة |
-| `description` | text (nullable) | وصف المادة |
-| `created_at` | timestamp | تاريخ الإضافة |
-| `updated_at` | timestamp | تاريخ آخر تحديث |
+| `id` | bigint (PK) | المعرف |
+| `teacher_id` | bigint (FK → teachers) | الأستاذ المسؤول |
+| `title` | string | عنوان المقرر |
+| `description` | text (nullable) | الوصف |
 
-#### Migration:
-```php
-Schema::create('subjects', function (Blueprint $table) {
-    $table->id();
-    $table->foreignId('user_id')->constrained()->onDelete('cascade');
-    $table->string('name');
-    $table->string('code')->nullable();
-    $table->string('color')->nullable();
-    $table->enum('difficulty', ['easy', 'medium', 'hard'])->default('medium');
-    $table->integer('credit_hours')->nullable();
-    $table->text('description')->nullable();
-    $table->timestamps();
-});
-```
-
-#### Model — العلاقات:
-```php
-class Subject extends Model
-{
-    use HasFactory;
-
-    protected $fillable = [
-        'user_id', 'name', 'code', 'color',
-        'difficulty', 'credit_hours', 'description',
-    ];
-
-    // المادة تتبع لطالب واحد
-    public function user()
-    {
-        return $this->belongsTo(User::class);
-    }
-
-    // المادة لديها عدة مهام
-    public function tasks()
-    {
-        return $this->hasMany(Task::class);
-    }
-
-    // المادة لديها عدة ملخصات
-    public function summaries()
-    {
-        return $this->hasMany(Summary::class);
-    }
-
-    // المادة لديها عدة اختبارات
-    public function exams()
-    {
-        return $this->hasMany(Exam::class);
-    }
-
-    // المادة تظهر في عدة خطط دراسية (علاقة متعددة إلى متعددة)
-    public function studyPlans()
-    {
-        return $this->belongsToMany(StudyPlan::class, 'plan_subject')
-                    ->withPivot('allocated_hours', 'day_of_week')
-                    ->withTimestamps();
-    }
-}
-```
-
----
-
-### 3. ✅ نموذج المهمة — Task
-
-**الملف:** `app/Models/Task.php`
-**الترحيل:** `database/migrations/xxxx_create_tasks_table.php`
-
-#### حقول قاعدة البيانات:
-
+#### `lectures` — المحاضرات
 | الحقل | النوع | الوصف |
 |-------|------|-------|
-| `id` | bigint (PK) | المعرف الفريد |
-| `user_id` | bigint (FK → users) | صاحب المهمة |
-| `subject_id` | bigint (FK → subjects, nullable) | المادة المرتبطة (اختياري) |
-| `title` | string | عنوان المهمة |
-| `description` | text (nullable) | تفاصيل المهمة |
-| `priority` | enum('low','medium','high','urgent') | مستوى الأولوية |
-| `status` | enum('pending','in_progress','completed') | حالة المهمة |
-| `due_date` | datetime (nullable) | الموعد النهائي |
-| `completed_at` | datetime (nullable) | وقت الإنجاز الفعلي |
-| `is_crisis` | boolean (default: false) | هل المهمة في وضع الأزمة؟ |
-| `created_at` | timestamp | تاريخ الإنشاء |
-| `updated_at` | timestamp | تاريخ آخر تحديث |
+| `id` | bigint (PK) | المعرف |
+| `course_id` | bigint (FK → courses) | المقرر |
+| `title` | string | العنوان |
+| `content_text` | text (nullable) | محتوى نصي (يُستخدم لتوليد الاختبارات) |
+| `file_url` | string (nullable) | رابط ملف PDF/DOCX |
+| `video_url` | string (nullable) | رابط فيديو |
+| `img_url` | string (nullable) | صورة غلاف |
+| `order_index` | integer | ترتيب المحاضرة |
 
-#### Migration:
-```php
-Schema::create('tasks', function (Blueprint $table) {
-    $table->id();
-    $table->foreignId('user_id')->constrained()->onDelete('cascade');
-    $table->foreignId('subject_id')->nullable()->constrained()->onDelete('set null');
-    $table->string('title');
-    $table->text('description')->nullable();
-    $table->enum('priority', ['low', 'medium', 'high', 'urgent'])->default('medium');
-    $table->enum('status', ['pending', 'in_progress', 'completed'])->default('pending');
-    $table->dateTime('due_date')->nullable();
-    $table->dateTime('completed_at')->nullable();
-    $table->boolean('is_crisis')->default(false);
-    $table->timestamps();
-});
-```
-
-#### Model — العلاقات:
-```php
-class Task extends Model
-{
-    use HasFactory;
-
-    protected $fillable = [
-        'user_id', 'subject_id', 'title', 'description',
-        'priority', 'status', 'due_date', 'completed_at', 'is_crisis',
-    ];
-
-    protected $casts = [
-        'due_date' => 'datetime',
-        'completed_at' => 'datetime',
-    ];
-
-    // المهمة تتبع لطالب واحد
-    public function user()
-    {
-        return $this->belongsTo(User::class);
-    }
-
-    // المهمة قد تكون مرتبطة بمادة
-    public function subject()
-    {
-        return $this->belongsTo(Subject::class);
-    }
-
-    // نطاق: المهام غير المكتملة
-    public function scopePending($query)
-    {
-        return $query->where('status', '!=', 'completed');
-    }
-
-    // نطاق: مهام الأولوية العالية
-    public function scopeUrgent($query)
-    {
-        return $query->where('priority', 'urgent');
-    }
-
-    // نطاق: مهام وضع الأزمة
-    public function scopeCrisis($query)
-    {
-        return $query->where('is_crisis', true);
-    }
-}
-```
-
----
-
-### 4. 📝 نموذج الملخص — Summary
-
-**الملف:** `app/Models/Summary.php`
-**الترحيل:** `database/migrations/xxxx_create_summaries_table.php`
-
-#### حقول قاعدة البيانات:
-
+#### `quizzes` — الاختبارات
 | الحقل | النوع | الوصف |
 |-------|------|-------|
-| `id` | bigint (PK) | المعرف الفريد |
-| `user_id` | bigint (FK → users) | صاحب الملخص |
-| `subject_id` | bigint (FK → subjects, nullable) | المادة المرتبطة |
-| `title` | string | عنوان الملخص |
-| `original_text` | longText | النص الأصلي (من الملف أو الإدخال) |
-| `summary_text` | longText | الملخص المُنتج بالذكاء الاصطناعي |
-| `summary_level` | enum('brief','medium','detailed') | مستوى التلخيص |
-| `file_path` | string (nullable) | مسار ملف PDF الأصلي |
-| `file_name` | string (nullable) | اسم الملف الأصلي |
-| `word_count_original` | integer | عدد كلمات النص الأصلي |
-| `word_count_summary` | integer | عدد كلمات الملخص |
-| `created_at` | timestamp | تاريخ الإنشاء |
-| `updated_at` | timestamp | تاريخ آخر تحديث |
+| `id` | bigint (PK) | المعرف |
+| `lecture_id` | bigint (FK → lectures) | المحاضرة المرتبطة |
+| `title` | string | عنوان الاختبار |
+| `is_ai_generated` | boolean | هل تم توليده بالـ AI؟ |
+| `status` | enum('draft','published') | حالة النشر |
+| `start_time` | datetime (nullable) | وقت البدء |
+| `end_time` | datetime (nullable) | وقت الانتهاء |
+| `duration` | integer (nullable) | المدة بالدقائق |
 
-#### Migration:
-```php
-Schema::create('summaries', function (Blueprint $table) {
-    $table->id();
-    $table->foreignId('user_id')->constrained()->onDelete('cascade');
-    $table->foreignId('subject_id')->nullable()->constrained()->onDelete('set null');
-    $table->string('title');
-    $table->longText('original_text');
-    $table->longText('summary_text');
-    $table->enum('summary_level', ['brief', 'medium', 'detailed'])->default('medium');
-    $table->string('file_path')->nullable();
-    $table->string('file_name')->nullable();
-    $table->integer('word_count_original')->default(0);
-    $table->integer('word_count_summary')->default(0);
-    $table->timestamps();
-});
-```
-
-#### Model — العلاقات:
-```php
-class Summary extends Model
-{
-    use HasFactory;
-
-    protected $fillable = [
-        'user_id', 'subject_id', 'title', 'original_text',
-        'summary_text', 'summary_level', 'file_path', 'file_name',
-        'word_count_original', 'word_count_summary',
-    ];
-
-    // الملخص يتبع لطالب واحد
-    public function user()
-    {
-        return $this->belongsTo(User::class);
-    }
-
-    // الملخص قد يكون مرتبطاً بمادة
-    public function subject()
-    {
-        return $this->belongsTo(Subject::class);
-    }
-}
-```
-
----
-
-### 5. 📅 نموذج خطة الدراسة — StudyPlan
-
-**الملف:** `app/Models/StudyPlan.php`
-**الترحيل:** `database/migrations/xxxx_create_study_plans_table.php`
-
-#### حقول قاعدة البيانات:
-
+#### `questions` — الأسئلة
 | الحقل | النوع | الوصف |
 |-------|------|-------|
-| `id` | bigint (PK) | المعرف الفريد |
-| `user_id` | bigint (FK → users) | صاحب الخطة |
-| `name` | string | اسم الخطة (مثال: "خطة الأسبوع 5") |
-| `start_date` | date | تاريخ بداية الأسبوع |
-| `end_date` | date | تاريخ نهاية الأسبوع |
-| `total_study_hours` | decimal(5,2) | إجمالي ساعات المذاكرة المخططة |
-| `is_active` | boolean (default: true) | هل الخطة فعّالة حالياً؟ |
-| `is_crisis_mode` | boolean (default: false) | هل الخطة في وضع الأزمة؟ |
-| `notes` | text (nullable) | ملاحظات عامة على الخطة |
-| `created_at` | timestamp | تاريخ الإنشاء |
-| `updated_at` | timestamp | تاريخ آخر تحديث |
+| `id` | bigint (PK) | المعرف |
+| `quiz_id` | bigint (FK → quizzes) | الاختبار |
+| `question_text` | text | نص السؤال |
 
-#### Migration:
-```php
-Schema::create('study_plans', function (Blueprint $table) {
-    $table->id();
-    $table->foreignId('user_id')->constrained()->onDelete('cascade');
-    $table->string('name');
-    $table->date('start_date');
-    $table->date('end_date');
-    $table->decimal('total_study_hours', 5, 2)->default(0);
-    $table->boolean('is_active')->default(true);
-    $table->boolean('is_crisis_mode')->default(false);
-    $table->text('notes')->nullable();
-    $table->timestamps();
-});
-```
-
-#### الجدول الوسيط — `plan_subject` (علاقة متعدد إلى متعدد):
-
-```php
-Schema::create('plan_subject', function (Blueprint $table) {
-    $table->id();
-    $table->foreignId('study_plan_id')->constrained()->onDelete('cascade');
-    $table->foreignId('subject_id')->constrained()->onDelete('cascade');
-    $table->decimal('allocated_hours', 4, 1)->default(0);
-    $table->enum('day_of_week', ['saturday','sunday','monday','tuesday','wednesday','thursday','friday']);
-    $table->time('start_time')->nullable();
-    $table->time('end_time')->nullable();
-    $table->timestamps();
-
-    $table->unique(['study_plan_id', 'subject_id', 'day_of_week']);
-});
-```
-
-#### Model — العلاقات:
-```php
-class StudyPlan extends Model
-{
-    use HasFactory;
-
-    protected $fillable = [
-        'user_id', 'name', 'start_date', 'end_date',
-        'total_study_hours', 'is_active', 'is_crisis_mode', 'notes',
-    ];
-
-    protected $casts = [
-        'start_date' => 'date',
-        'end_date' => 'date',
-        'is_active' => 'boolean',
-        'is_crisis_mode' => 'boolean',
-    ];
-
-    // الخطة تتبع لطالب واحد
-    public function user()
-    {
-        return $this->belongsTo(User::class);
-    }
-
-    // الخطة تحتوي عدة مواد (متعدد إلى متعدد)
-    public function subjects()
-    {
-        return $this->belongsToMany(Subject::class, 'plan_subject')
-                    ->withPivot('allocated_hours', 'day_of_week', 'start_time', 'end_time')
-                    ->withTimestamps();
-    }
-
-    // نطاق: الخطط الفعّالة فقط
-    public function scopeActive($query)
-    {
-        return $query->where('is_active', true);
-    }
-
-    // نطاق: خطط وضع الأزمة
-    public function scopeCrisisMode($query)
-    {
-        return $query->where('is_crisis_mode', true);
-    }
-}
-```
-
----
-
-### 6. 📋 نموذج الاختبار — Exam
-
-**الملف:** `app/Models/Exam.php`
-**الترحيل:** `database/migrations/xxxx_create_exams_table.php`
-
-#### حقول قاعدة البيانات:
-
+#### `question_options` — خيارات الأسئلة
 | الحقل | النوع | الوصف |
 |-------|------|-------|
-| `id` | bigint (PK) | المعرف الفريق |
-| `user_id` | bigint (FK → users) | صاحب الاختبار |
-| `subject_id` | bigint (FK → subjects) | المادة المرتبطة |
-| `title` | string | عنوان الاختبار (مثال: "ميدترم هندسة برمجيات") |
-| `exam_date` | datetime | موعد الاختبار |
-| `exam_type` | enum('quiz','midterm','final','oral','practical') | نوع الاختبار |
-| `location` | string (nullable) | مكان الاختبار |
-| `notes` | text (nullable) | ملاحظات |
-| `grade` | decimal(5,2) (nullable) | الدرجة (بعد الاختبار) |
-| `max_grade` | decimal(5,2) (nullable) | الدرجة العظمى |
-| `is_notified` | boolean (default: false) | هل تم تنبيه الطالب؟ |
-| `created_at` | timestamp | تاريخ الإنشاء |
-| `updated_at` | timestamp | تاريخ آخر تحديث |
+| `id` | bigint (PK) | المعرف |
+| `question_id` | bigint (FK → questions) | السؤال |
+| `option_text` | string | نص الخيار |
+| `is_correct` | boolean | هل هو الإجابة الصحيحة؟ |
 
-#### Migration:
-```php
-Schema::create('exams', function (Blueprint $table) {
-    $table->id();
-    $table->foreignId('user_id')->constrained()->onDelete('cascade');
-    $table->foreignId('subject_id')->constrained()->onDelete('cascade');
-    $table->string('title');
-    $table->dateTime('exam_date');
-    $table->enum('exam_type', ['quiz', 'midterm', 'final', 'oral', 'practical']);
-    $table->string('location')->nullable();
-    $table->text('notes')->nullable();
-    $table->decimal('grade', 5, 2)->nullable();
-    $table->decimal('max_grade', 5, 2)->nullable();
-    $table->boolean('is_notified')->default(false);
-    $table->timestamps();
-});
-```
-
-#### Model — العلاقات:
-```php
-class Exam extends Model
-{
-    use HasFactory;
-
-    protected $fillable = [
-        'user_id', 'subject_id', 'title', 'exam_date',
-        'exam_type', 'location', 'notes', 'grade',
-        'max_grade', 'is_notified',
-    ];
-
-    protected $casts = [
-        'exam_date' => 'datetime',
-    ];
-
-    // الاختبار يتبع لطالب واحد
-    public function user()
-    {
-        return $this->belongsTo(User::class);
-    }
-
-    // الاختبار يتبع لمادة واحدة
-    public function subject()
-    {
-        return $this->belongsTo(Subject::class);
-    }
-
-    // نطاق: الاختبارات القادمة
-    public function scopeUpcoming($query)
-    {
-        return $query->where('exam_date', '>', now())->orderBy('exam_date');
-    }
-
-    // نطاق: اختبارات هذا الأسبوع
-    public function scopeThisWeek($query)
-    {
-        return $query->whereBetween('exam_date', [now()->startOfWeek(), now()->endOfWeek()]);
-    }
-
-    // نطاق: اختبارات الأيام القادمة القريبة (لوضع الأزمة)
-    public function scopeWithinDays($query, $days = 3)
-    {
-        return $query->whereBetween('exam_date', [now(), now()->addDays($days)]);
-    }
-}
-```
-
----
-
-### 7. 🤖 نموذج محادثة المساعد — ChatMessage
-
-**الملف:** `app/Models/ChatMessage.php`
-**الترحيل:** `database/migrations/xxxx_create_chat_messages_table.php`
-
-#### حقول قاعدة البيانات:
-
+#### `course_enrollments` — تسجيل الطلاب
 | الحقل | النوع | الوصف |
 |-------|------|-------|
-| `id` | bigint (PK) | المعرف الفريد |
-| `user_id` | bigint (FK → users) | صاحب المحادثة |
-| `subject_id` | bigint (FK → subjects, nullable) | المادة المرتبطة |
-| `role` | enum('user','assistant') | دور المرسل (طالب أو المساعد الذكي) |
-| `message` | longText | محتوى الرسالة |
-| `created_at` | timestamp | وقت الإرسال |
+| `id` | bigint (PK) | المعرف |
+| `student_id` | bigint (FK → students) | الطالب |
+| `course_id` | bigint (FK → courses) | المقرر |
+| `status` | enum('active','dropped') | حالة التسجيل |
+| `enrolled_at` | timestamp | تاريخ التسجيل |
 
-#### Migration:
-```php
-Schema::create('chat_messages', function (Blueprint $table) {
-    $table->id();
-    $table->foreignId('user_id')->constrained()->onDelete('cascade');
-    $table->foreignId('subject_id')->nullable()->constrained()->onDelete('set null');
-    $table->enum('role', ['user', 'assistant']);
-    $table->longText('message');
-    $table->timestamps();
-});
-```
-
-#### Model — العلاقات:
-```php
-class ChatMessage extends Model
-{
-    use HasFactory;
-
-    protected $fillable = [
-        'user_id', 'subject_id', 'role', 'message',
-    ];
-
-    // الرسالة تتبع لطالب واحد
-    public function user()
-    {
-        return $this->belongsTo(User::class);
-    }
-
-    // الرسالة قد تكون مرتبطة بمادة
-    public function subject()
-    {
-        return $this->belongsTo(Subject::class);
-    }
-
-    // نطاق: رسائل مساعد الذكاء الاصطناعي
-    public function scopeAssistant($query)
-    {
-        return $query->where('role', 'assistant');
-    }
-
-    // نطاق: رسائل الطالب
-    public function scopeUserMessages($query)
-    {
-        return $query->where('role', 'user');
-    }
-}
-```
-
----
-
-### 8. 🔔 نموذج التنبيه — Notification
-
-**الملف:** `app/Models/Notification.php`
-**الترحيل:** `database/migrations/xxxx_create_notifications_table.php`
-
-#### حقول قاعدة البيانات:
-
+#### `student_quiz_attempts` — محاولات الاختبارات
 | الحقل | النوع | الوصف |
 |-------|------|-------|
-| `id` | bigint (PK) | المعرف الفريق |
-| `user_id` | bigint (FK → users) | صاحب التنبيه |
-| `type` | enum('exam_reminder','task_due','crisis_mode','study_plan','general') | نوع التنبيه |
-| `title` | string | عنوان التنبيه |
-| `message` | text | محتوى التنبيه |
-| `related_type` | string (nullable) | نوع الكيان المرتبط (Exam, Task, etc.) |
-| `related_id` | bigint (nullable) | معرف الكيان المرتبط |
-| `is_read` | boolean (default: false) | هل تمت قراءة التنبيه؟ |
-| `read_at` | timestamp (nullable) | وقت القراءة |
-| `created_at` | timestamp | وقت الإنشاء |
+| `id` | bigint (PK) | المعرف |
+| `student_id` | bigint (FK → students) | الطالب |
+| `quiz_id` | bigint (FK → quizzes) | الاختبار |
+| `score` | decimal (nullable) | الدرجة |
+| `status` | enum('in_progress','submitted') | الحالة |
+| `started_at` | timestamp | وقت البدء |
+| `submitted_at` | timestamp (nullable) | وقت التسليم |
 
-#### Migration:
-```php
-Schema::create('notifications', function (Blueprint $table) {
-    $table->id();
-    $table->foreignId('user_id')->constrained()->onDelete('cascade');
-    $table->enum('type', ['exam_reminder', 'task_due', 'crisis_mode', 'study_plan', 'general']);
-    $table->string('title');
-    $table->text('message');
-    $table->string('related_type')->nullable();
-    $table->unsignedBigInteger('related_id')->nullable();
-    $table->boolean('is_read')->default(false);
-    $table->timestamp('read_at')->nullable();
-    $table->timestamps();
-});
+#### `student_answers` — إجابات الطلاب
+| الحقل | النوع | الوصف |
+|-------|------|-------|
+| `id` | bigint (PK) | المعرف |
+| `attempt_id` | bigint (FK → student_quiz_attempts) | المحاولة |
+| `question_id` | bigint (FK → questions) | السؤال |
+| `selected_option_id` | bigint (FK → question_options, nullable) | الخيار المحدد |
+| `is_correct` | boolean | هل الإجابة صحيحة؟ |
+
+---
+
+## 🤖 الذكاء الاصطناعي (AI Integration)
+
+المشروع يستخدم **Anthropic Claude API** عبر `App\Services\AIService`:
+
+### الميزات الحالية:
+1. **توليد اختبارات MCQ** — الأستاذ يرفع محاضرة نصية → النظام يولّد أسئلة اختيار من متعدد
+2. **تلخيص محاضرات** — دالة جاهزة لتلخيص النصوص الأكاديمية
+
+### إعداد API:
+```env
+# أضف في ملف .env
+ANTHROPIC_API_KEY=sk-ant-your-key-here
 ```
 
-#### Model — العلاقات:
 ```php
-class Notification extends Model
-{
-    use HasFactory;
-
-    protected $fillable = [
-        'user_id', 'type', 'title', 'message',
-        'related_type', 'related_id', 'is_read', 'read_at',
-    ];
-
-    protected $casts = [
-        'read_at' => 'datetime',
-    ];
-
-    // التنبيه يتبع لطالب واحد
-    public function user()
-    {
-        return $this->belongsTo(User::class);
-    }
-
-    // نطاق: التنبيهات غير المقروءة
-    public function scopeUnread($query)
-    {
-        return $query->where('is_read', false);
-    }
-
-    // نطاق: تنبيهات وضع الأزمة
-    public function scopeCrisis($query)
-    {
-        return $query->where('type', 'crisis_mode');
-    }
-
-    // تحديد التنبيه كمقروء
-    public function markAsRead()
-    {
-        $this->update(['is_read' => true, 'read_at' => now()]);
-    }
-}
+// أضف في config/services.php
+'anthropic' => [
+    'key' => env('ANTHROPIC_API_KEY'),
+],
 ```
 
 ---
 
-### 🗺️ مخطط العلاقات (ER Diagram)
+## 🔐 نظام المصادقة
 
-```
-User (1) ──────< (N) Subject
-  │                   │
-  │                   ├──< Task
-  │                   ├──< Summary
-  │                   ├──< Exam
-  │                   └──>< StudyPlan  (متعدد إلى متعدد عبر plan_subject)
-  │
-  ├──< Task
-  ├──< Summary
-  ├──< StudyPlan
-  ├──< Exam
-  ├──< ChatMessage
-  └──< Notification
-```
+### نوعان من المستخدمين:
+- **أستاذ (teacher):** يدير المقررات، يرفع المحاضرات، يولّد ويراجع الاختبارات
+- **طالب (student):** يتصفح المقررات، يشاهد المحاضرات، يؤدي الاختبارات
 
-### 📊 ملخص الجداول
-
-| # | الجدول | الوصف | العلاقة مع User |
-|---|--------|-------|----------------|
-| 1 | `users` | بيانات الطلاب | — |
-| 2 | `subjects` | المواد الدراسية | واحد إلى متعدد |
-| 3 | `tasks` | المهام الدراسية | واحد إلى متعدد |
-| 4 | `summaries` | ملخصات الذكاء الاصطناعي | واحد إلى متعدد |
-| 5 | `study_plans` | خطط المذاكرة الأسبوعية | واحد إلى متعدد |
-| 6 | `plan_subject` | جدول وسيط (خطة ↔ مادة) | — |
-| 7 | `exams` | الاختبارات والمواعيد | واحد إلى متعدد |
-| 8 | `chat_messages` | محادثات المساعد الذكي | واحد إلى متعدد |
-| 9 | `notifications` | التنبيهات والإشعارات | واحد إلى متعدد |
+### آلية التسجيل:
+1. المستخدم يختار الدور (أستاذ/طالب)
+2. يُنشأ سجل في `users` (username + password + role)
+3. يُنشأ سجل تفصيلي في `teachers` أو `students` (1:1)
+4. توجيه تلقائي بعد الدخول حسب الدور:
+   - أستاذ → `/teacher/dashboard`
+   - طالب → `/student/dashboard`
 
 ---
 
-### 🚀 أوامر إنشاء الـ Migrations والـ Models
+## 🛣️ المسارات (Routes)
+
+### مسارات عامة:
+| Method | المسار | الوظيفة |
+|--------|--------|---------|
+| GET | `/` | الصفحة الرئيسية (redirect لـ dashboard إذا مسجل) |
+| GET | `/login` | صفحة تسجيل الدخول |
+| POST | `/login` | معالجة تسجيل الدخول |
+| GET | `/register` | صفحة التسجيل |
+| POST | `/register` | معالجة التسجيل |
+
+### مسارات محمية (auth):
+| Method | المسار | الوظيفة |
+|--------|--------|---------|
+| POST | `/logout` | تسجيل الخروج |
+| GET | `/profile` | الملف الشخصي |
+| PUT | `/profile` | تحديث الملف الشخصي |
+| GET | `/dashboard` | توجيه ذكي حسب الدور |
+
+### مسارات الأستاذ:
+| Method | المسار | الوظيفة |
+|--------|--------|---------|
+| GET | `/teacher/dashboard` | لوحة التحكم |
+| _CRUD_ | `/teacher/courses/*` | إدارة المقررات |
+| _CRUD_ | `/teacher/lectures/*` | إدارة المحاضرات |
+| GET | `/teacher/quizzes/generate/{lecture}` | توليد اختبار بالـ AI |
+| GET | `/teacher/quizzes/{quiz}/review` | مراجعة الاختبار |
+| POST | `/teacher/quizzes/{quiz}/publish` | نشر الاختبار |
+
+### مسارات الطالب:
+| Method | المسار | الوظيفة |
+|--------|--------|---------|
+| GET | `/student/dashboard` | لوحة التحكم |
+| _يُضاف لاحقاً_ | | مسارات الاختبارات والتسجيل |
+
+---
+
+## 🚀 التثبيت والتشغيل
+
+### المتطلبات:
+- PHP 8.2+
+- Composer
+- MySQL / MariaDB
+- Node.js + npm
+
+### خطوات التثبيت:
 
 ```bash
-# إنشاء Model + Migration معاً
-php artisan make:model Subject -m
-php artisan make:model Task -m
-php artisan make:model Summary -m
-php artisan make:model StudyPlan -m
-php artisan make:model Exam -m
-php artisan make:model ChatMessage -m
-php artisan make:model Notification -m
+# 1. الدخول لمجلد المشروع
+cd learning-platform
 
-# إنشاء الجدول الوسيط
-php artisan make:migration create_plan_subject_table
+# 2. تثبيت التبعيات
+composer install
+npm install
 
-# بعد تعبئة كل migration، شغّل:
+# 3. إعداد البيئة
+cp .env.example .env
+php artisan key:generate
+
+# 4. إعداد قاعدة البيانات (عدّل .env أولاً)
 php artisan migrate
-```
 
-> **ملاحظة:** نموذج `User` يأتي جاهزاً مع Laravel، فقط عدّل عليه بإضافة الحقول والعلاقات الجديدة.
+# 5. ربط التخزين العام
+php artisan storage:link
 
----
-
-## 🎮 شرح تفصيلي لوحدات التحكم (Controllers)
-
-هذا القسم يشرح كل ملف Controller بالتفصيل: دواله، المنطق البرمجي، والـ endpoints الخاصة به، مبني على قواعد البيانات المعرفة أعلاه.
-
----
-
-### 1. 🔐 وحدة تحكم المصادقة — AuthController
-
-**الملف:** `app/Http/Controllers/AuthController.php`
-**الأمر:** `php artisan make:controller AuthController`
-
-#### الدوال المطلوبة:
-
-| الدالة | الوصف | Method | Route |
-|--------|-------|--------|-------|
-| `showRegisterForm()` | عرض صفحة التسجيل | GET | `/register` |
-| `register()` | معالجة بيانات التسجيل وحفظ المستخدم الجديد | POST | `/register` |
-| `showLoginForm()` | عرض صفحة تسجيل الدخول | GET | `/login` |
-| `login()` | التحقق من البيانات وتسجيل الدخول | POST | `/login` |
-| `logout()` | تسجيل الخروج وحذف الجلسة | POST | `/logout` |
-| `profile()` | عرض صفحة الملف الشخصي | GET | `/profile` |
-| `updateProfile()` | تحديث بيانات الملف الشخصي | PUT | `/profile` |
-
-#### الكود التفصيلي:
-
-```php
-<?php
-
-namespace App\Http\Controllers;
-
-use App\Models\User;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Validation\Rule;
-
-class AuthController extends Controller
-{
-    // ========== عرض صفحة التسجيل ==========
-    public function showRegisterForm()
-    {
-        return view('auth.register');
-    }
-
-    // ========== معالجة التسجيل ==========
-    public function register(Request $request)
-    {
-        // التحقق من صحة البيانات المدخلة
-        $validated = $request->validate([
-            'name'         => 'required|string|max:255',
-            'email'        => 'required|email|unique:users,email',
-            'password'     => 'required|string|min:8|confirmed',
-            'university'   => 'nullable|string|max:255',
-            'major'        => 'nullable|string|max:255',
-            'level'        => 'nullable|string|max:255',
-        ]);
-
-        // تشفير كلمة المرور
-        $validated['password'] = Hash::make($validated['password']);
-
-        // إنشاء المستخدم
-        $user = User::create($validated);
-
-        // تسجيل الدخول تلقائياً بعد التسجيل
-        Auth::login($user);
-
-        return redirect()->route('dashboard')->with('success', 'تم التسجيل بنجاح!');
-    }
-
-    // ========== عرض صفحة تسجيل الدخول ==========
-    public function showLoginForm()
-    {
-        return view('auth.login');
-    }
-
-    // ========== معالجة تسجيل الدخول ==========
-    public function login(Request $request)
-    {
-        $credentials = $request->validate([
-            'email'    => 'required|email',
-            'password' => 'required|string',
-        ]);
-
-        // محاولة تسجيل الدخول مع خيار "تذكرني"
-        if (Auth::attempt($credentials, $request->boolean('remember'))) {
-            $request->session()->regenerate(); // منع هجوم session fixation
-            return redirect()->intended(route('dashboard'));
-        }
-
-        return back()->withErrors([
-            'email' => 'بيانات الدخول غير صحيحة.',
-        ])->onlyInput('email');
-    }
-
-    // ========== تسجيل الخروج ==========
-    public function logout(Request $request)
-    {
-        Auth::logout();
-        $request->session()->invalidate();
-        $request->session()->regenerateToken();
-        return redirect()->route('login');
-    }
-
-    // ========== عرض الملف الشخصي ==========
-    public function profile()
-    {
-        return view('auth.profile', ['user' => Auth::user()]);
-    }
-
-    // ========== تحديث الملف الشخصي ==========
-    public function updateProfile(Request $request)
-    {
-        $user = Auth::user();
-
-        $validated = $request->validate([
-            'name'       => 'required|string|max:255',
-            'email'      => ['required', 'email', Rule::unique('users')->ignore($user->id)],
-            'university' => 'nullable|string|max:255',
-            'major'      => 'nullable|string|max:255',
-            'level'      => 'nullable|string|max:255',
-            'avatar'     => 'nullable|image|max:2048',
-        ]);
-
-        // رفع الصورة الشخصية إن وُجدت
-        if ($request->hasFile('avatar')) {
-            // حذف الصورة القديمة إن وجدت
-            if ($user->avatar) {
-                \Storage::delete($user->avatar);
-            }
-            $validated['avatar'] = $request->file('avatar')->store('avatars', 'public');
-        }
-
-        $user->update($validated);
-
-        return back()->with('success', 'تم تحديث الملف الشخصي بنجاح.');
-    }
-}
-```
-
-#### الـ Middleware المطلوب:
-```php
-// في Routes: تطبيق middleware auth على الصفحات المحمية
-Route::middleware('auth')->group(function () {
-    Route::get('/profile', [AuthController::class, 'profile'])->name('profile');
-    Route::put('/profile', [AuthController::class, 'updateProfile'])->name('profile.update');
-    Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
-});
+# 6. تشغيل السيرفر
+php artisan serve
+# في تيرمينال ثاني:
+npm run dev
 ```
 
 ---
 
-### 2. 🏠 وحدة تحكم لوحة التحكم — DashboardController
+## 📦 التبعيات الحالية
 
-**الملف:** `app/Http/Controllers/DashboardController.php`
-**الأمر:** `php artisan make:controller DashboardController`
+### Composer (PHP):
+| الحزمة | الإصدار | الوظيفة |
+|--------|---------|---------|
+| `laravel/framework` | ^12.0 | إطار العمل الأساسي |
+| `laravel/tinker` | ^2.10.1 | REPL للتطوير |
 
-#### الدوال المطلوبة:
-
-| الدالة | الوصف | Method | Route |
-|--------|-------|--------|-------|
-| `index()` | الصفحة الرئيسية — عرض ملخص شامل للطالب | GET | `/dashboard` |
-
-#### الكود التفصيلي:
-
-```php
-<?php
-
-namespace App\Http\Controllers;
-
-use App\Models\Task;
-use App\Models\Summary;
-use App\Models\Exam;
-use App\Models\Notification;
-use App\Models\StudyPlan;
-use Illuminate\Support\Facades\Auth;
-
-class DashboardController extends Controller
-{
-    // ========== عرض لوحة التحكم الرئيسية ==========
-    public function index()
-    {
-        $user = Auth::user();
-
-        // 1. إحصائيات المهام
-        $totalTasks       = $user->tasks()->count();
-        $completedTasks   = $user->tasks()->where('status', 'completed')->count();
-        $pendingTasks     = $user->tasks()->where('status', 'pending')->count();
-        $progressPercent  = $totalTasks > 0 ? round(($completedTasks / $totalTasks) * 100) : 0;
-
-        // 2. الاختبارات القادمة (أقرب 5)
-        $upcomingExams = $user->exams()
-            ->where('exam_date', '>', now())
-            ->orderBy('exam_date')
-            ->take(5)
-            ->get();
-
-        // 3. هل نحن في وضع الأزمة؟ (اختبار خلال 3 أيام)
-        $crisisActive = $user->exams()
-            ->whereBetween('exam_date', [now(), now()->addDays(3)])
-            ->exists();
-
-        // 4. الخطة الدراسية الفعّالة
-        $activePlan = $user->studyPlans()->where('is_active', true)->first();
-
-        // 5. آخر الملخصات
-        $recentSummaries = $user->summaries()
-            ->latest()
-            ->take(5)
-            ->get();
-
-        // 6. التنبيهات غير المقروءة
-        $unreadNotifications = $user->notifications ?? collect();
-        // ملاحظة: لو استخدمت Laravel Notification الأصلي:
-        // $unreadNotifications = $user->unreadNotifications;
-
-        // 7. تفعيل وضع الأزمة تلقائياً إن لزم
-        if ($crisisActive && $activePlan && !$activePlan->is_crisis_mode) {
-            $activePlan->update(['is_crisis_mode' => true]);
-        }
-
-        return view('dashboard', compact(
-            'totalTasks',
-            'completedTasks',
-            'pendingTasks',
-            'progressPercent',
-            'upcomingExams',
-            'crisisActive',
-            'activePlan',
-            'recentSummaries',
-            'unreadNotifications'
-        ));
-    }
-}
-```
-
-#### ما تعرضه صفحة `dashboard.blade.php`:
-- **شريط تقدم** المهام (مثلاً: 65% مكتمل)
-- **بطاقات** بالاختبارات القادمة مع العد التنازلي
-- **تنبيه وضع الأزمة** 🔴 إن كان مفعّلاً
-- **الخطة الأسبوعية** الحالية
-- **آخر الملخصات** مع روابط سريعة
-- **عدد التنبيهات** غير المقروءة
+### NPM (Frontend):
+يُدار عبر `package.json` و Vite.
 
 ---
 
-### 3. 📝 وحدة تحكم التلخيص — SummaryController
+## ⚠️ الحالة الحالية للمشروع
 
-**الملف:** `app/Http/Controllers/SummaryController.php`
-**الأمر:** `php artisan make:controller SummaryController`
+### ✅ تم تنفيذه:
+- [x] نظام المصادقة (تسجيل + دخول + خروج)
+- [x] نظام الأدوار (أستاذ / طالب)
+- [x] Models مع العلاقات (11 نموذج)
+- [x] Migrations (11 جدول + جداول النظام)
+- [x] لوحة تحكم الأستاذ (إحصائيات)
+- [x] لوحة تحكم الطالب (إحصائيات)
+- [x] إدارة المقررات (CRUD كامل للأستاذ)
+- [x] إدارة المحاضرات (CRUD + رفع ملفات)
+- [x] توليد الاختبارات بالذكاء الاصطناعي
+- [x] مراجعة ونشر الاختبارات
+- [x] إضافة/حذف أسئلة يدوياً
+- [x] صفحة تسجيل (واجهة كاملة)
+- [x] صفحة دخول (واجهة كاملة)
+- [x] صفحة لوحة تحكم الأستاذ (واجهة)
+- [x] خدمة AIService (Anthropic Claude)
 
-#### الدوال المطلوبة:
-
-| الدالة | الوصف | Method | Route |
-|--------|-------|--------|-------|
-| `index()` | عرض قائمة كل الملخصات | GET | `/summaries` |
-| `create()` | عرض صفحة إنشاء ملخص جديد | GET | `/summaries/create` |
-| `store()` | حفظ الملخص الجديد (مع استدعاء AI) | POST | `/summaries` |
-| `show($id)` | عرض ملخص محدد | GET | `/summaries/{id}` |
-| `destroy($id)` | حذف ملخص | DELETE | `/summaries/{id}` |
-
-#### الكود التفصيلي:
-
-```php
-<?php
-
-namespace App\Http\Controllers;
-
-use App\Models\Summary;
-use App\Services\AIService;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Smalot\PdfParser\Parser; // لت parsed PDF — يُثبّت via composer
-
-class SummaryController extends Controller
-{
-    protected $aiService;
-
-    public function __construct(AIService $aiService)
-    {
-        $this->aiService = $aiService;
-    }
-
-    // ========== عرض كل الملخصات ==========
-    public function index()
-    {
-        $summaries = Auth::user()->summaries()
-            ->with('subject')
-            ->latest()
-            ->paginate(10);
-
-        return view('summaries.index', compact('summaries'));
-    }
-
-    // ========== عرض صفحة إنشاء ملخص ==========
-    public function create()
-    {
-        $subjects = Auth::user()->subjects;
-        return view('summaries.create', compact('subjects'));
-    }
-
-    // ========== حفظ الملخص الجديد ==========
-    public function store(Request $request)
-    {
-        // التحقق من المدخلات
-        $validated = $request->validate([
-            'title'         => 'required|string|max:255',
-            'subject_id'    => 'nullable|exists:subjects,id',
-            'content'       => 'nullable|string',           // النص المُدخل يدوياً
-            'pdf_file'      => 'nullable|file|mimes:pdf|max:20480', // ملف PDF (حد 20MB)
-            'summary_level' => 'required|in:brief,medium,detailed',
-        ]);
-
-        $originalText = '';
-        $filePath = null;
-        $fileName = null;
-
-        // ===== استخراج النص من PDF إن وُجد =====
-        if ($request->hasFile('pdf_file')) {
-            $file = $request->file('pdf_file');
-            $fileName = $file->getClientOriginalName();
-            $filePath = $file->store('uploads/pdfs', 'public');
-
-            // استخراج النص باستخدام PdfParser
-            $parser = new Parser();
-            $pdf = $parser->parseFile($file->getRealPath());
-            $originalText = $pdf->getText();
-        }
-
-        // أو استخدام النص المُدخل يدوياً
-        if (empty($originalText) && $request->filled('content')) {
-            $originalText = $request->input('content');
-        }
-
-        // التأكد من وجود نص للتلخيص
-        if (empty(trim($originalText))) {
-            return back()->withErrors(['content' => 'يرجى إدخال نص أو رفع ملف PDF.'])->withInput();
-        }
-
-        // ===== استدعاء خدمة الذكاء الاصطناعي للتلخيص =====
-        $summaryText = $this->aiService->summarize($originalText, $validated['summary_level']);
-
-        // ===== حفظ الملخص في قاعدة البيانات =====
-        $summary = Summary::create([
-            'user_id'              => Auth::id(),
-            'subject_id'           => $validated['subject_id'],
-            'title'                => $validated['title'],
-            'original_text'        => $originalText,
-            'summary_text'         => $summaryText,
-            'summary_level'        => $validated['summary_level'],
-            'file_path'            => $filePath,
-            'file_name'            => $fileName,
-            'word_count_original'  => str_word_count($originalText),
-            'word_count_summary'   => str_word_count($summaryText),
-        ]);
-
-        return redirect()->route('summaries.show', $summary->id)
-            ->with('success', 'تم إنشاء الملخص بنجاح!');
-    }
-
-    // ========== عرض ملخص محدد ==========
-    public function show($id)
-    {
-        $summary = Summary::where('user_id', Auth::id())
-            ->where('id', $id)
-            ->with('subject')
-            ->firstOrFail();
-
-        // حساب نسبة التلخيص
-        $reductionPercent = $summary->word_count_original > 0
-            ? round((1 - $summary->word_count_summary / $summary->word_count_original) * 100)
-            : 0;
-
-        return view('summaries.show', compact('summary', 'reductionPercent'));
-    }
-
-    // ========== حذف ملخص ==========
-    public function destroy($id)
-    {
-        $summary = Summary::where('user_id', Auth::id())
-            ->where('id', $id)
-            ->firstOrFail();
-
-        // حذف ملف PDF من التخزين
-        if ($summary->file_path) {
-            \Storage::disk('public')->delete($summary->file_path);
-        }
-
-        $summary->delete();
-
-        return redirect()->route('summaries.index')
-            ->with('success', 'تم حذف الملخص بنجاح.');
-    }
-}
-```
-
-#### الحزم الإضافية المطلوبة:
-```bash
-# لاستخراج النص من PDF
-composer require smalot/pdfparser
-```
+### ❌ لم يُنفذ بعد:
+- [ ] صفحة لوحة تحكم الطالب (View)
+- [ ] واجهات إدارة المقررات (Views)
+- [ ] واجهات المحاضرات (Views)
+- [ ] واجهات الاختبارات والمراجعة (Views)
+- [ ] تسجيل الطلاب في المقررات (Enrollment flow)
+- [ ] أداء الاختبارات للطلاب (Quiz taking)
+- [ ] عرض النتائج والدرجات
+- [ ] تلخيص المحاضرات بالـ AI
+- [ ] Middleware للتحقق من الأدوار
+- [ ] Seeders للبيانات التجريبية
+- [ ] اختبارات (Unit/Feature tests)
+- [ ] Layout مشترك (app.blade.php)
+- [ ] إعداد config/services.php
 
 ---
 
-### 4. 🤖 وحدة تحكم المساعد الذكي — AssistantController
+## 📝 ملاحظات تقنية
 
-**الملف:** `app/Http/Controllers/AssistantController.php`
-**الأمر:** `php artisan make:controller AssistantController`
+### أسماء الـ Models:
+> ⚠️ أسماء النماذج بحروف صغيرة (`courses`, `teachers`, `quizzes`) بدلاً من المعيار (`Course`, `Teacher`, `Quiz`). هذا يسبب مشاكل مع Route Model Binding ويخالف PSR-4.
 
-#### الدوال المطلوبة:
-
-| الدالة | الوصف | Method | Route |
-|--------|-------|--------|-------|
-| `index()` | عرض صفحة المحادثة | GET | `/assistant` |
-| `chat()` | إرسال رسالة واستلام رد AI | POST | `/assistant/chat` |
-| `history()` | عرض سجل المحادثات | GET | `/assistant/history` |
-| `generateQuiz()` | توليد أسئلة تدريبية | POST | `/assistant/generate-quiz` |
-
-#### الكود التفصيلي:
-
-```php
-<?php
-
-namespace App\Http\Controllers;
-
-use App\Models\ChatMessage;
-use App\Services\AIService;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-
-class AssistantController extends Controller
-{
-    protected $aiService;
-
-    public function __construct(AIService $aiService)
-    {
-        $this->aiService = $aiService;
-    }
-
-    // ========== عرض صفحة المحادثة ==========
-    public function index(Request $request)
-    {
-        $subjectId = $request->query('subject_id');
-        $subjects = Auth::user()->subjects;
-
-        // جلب آخر 50 رسالة في المحادثة (أو لمادة محددة)
-        $messages = ChatMessage::where('user_id', Auth::id())
-            ->when($subjectId, fn($q) => $q->where('subject_id', $subjectId))
-            ->latest()
-            ->take(50)
-            ->get()
-            ->reverse()
-            ->values();
-
-        return view('assistant.index', compact('messages', 'subjects', 'subjectId'));
-    }
-
-    // ========== إرسال رسالة واستلام رد AI ==========
-    public function chat(Request $request)
-    {
-        $validated = $request->validate([
-            'message'    => 'required|string|max:5000',
-            'subject_id' => 'nullable|exists:subjects,id',
-        ]);
-
-        // حفظ رسالة المستخدم
-        ChatMessage::create([
-            'user_id'    => Auth::id(),
-            'subject_id' => $validated['subject_id'],
-            'role'       => 'user',
-            'message'    => $validated['message'],
-        ]);
-
-        // جلب آخر 10 رسائل كسياق للمحادثة
-        $chatHistory = ChatMessage::where('user_id', Auth::id())
-            ->when($validated['subject_id'], fn($q) => $q->where('subject_id', $validated['subject_id']))
-            ->latest()
-            ->take(10)
-            ->get()
-            ->reverse();
-
-        // استدعاء الذكاء الاصطناعي
-        $aiReply = $this->aiService->chat($chatHistory, $validated['message']);
-
-        // حفظ رد المساعد
-        ChatMessage::create([
-            'user_id'    => Auth::id(),
-            'subject_id' => $validated['subject_id'],
-            'role'       => 'assistant',
-            'message'    => $aiReply,
-        ]);
-
-        return response()->json([
-            'reply' => $aiReply,
-        ]);
-    }
-
-    // ========== عرض سجل المحادثات ==========
-    public function history(Request $request)
-    {
-        $conversations = ChatMessage::where('user_id', Auth::id())
-            ->selectRaw('subject_id, DATE(created_at) as date, COUNT(*) as message_count')
-            ->groupBy('subject_id', \DB::raw('DATE(created_at)'))
-            ->orderByDesc('date')
-            ->paginate(20);
-
-        return view('assistant.history', compact('conversations'));
-    }
-
-    // ========== توليد أسئلة تدريبية ==========
-    public function generateQuiz(Request $request)
-    {
-        $validated = $request->validate([
-            'subject_id'    => 'required|exists:subjects,id',
-            'topic'         => 'required|string|max:500',
-            'question_type' => 'required|in:multiple_choice,true_false,essay,mixed',
-            'count'         => 'required|integer|min:1|max:20',
-            'difficulty'    => 'required|in:easy,medium,hard',
-        ]);
-
-        $subject = Auth::user()->subjects()->findOrFail($validated['subject_id']);
-
-        // استدعاء AI لتوليد الأسئلة
-        $questions = $this->aiService->generateQuiz(
-            $subject->name,
-            $validated['topic'],
-            $validated['question_type'],
-            $validated['count'],
-            $validated['difficulty']
-        );
-
-        return response()->json([
-            'subject'   => $subject->name,
-            'questions' => $questions,
-        ]);
-    }
-}
-```
+### خدمة الذكاء الاصطناعي:
+- `AIService.php` مُعد للاتصال بـ Anthropic Claude
+- يحتاج `ANTHROPIC_API_KEY` في `.env`
+- يحتاج إعداد `config/services.php`
 
 ---
 
-### 5. ✅ وحدة تحكم المهام — TaskController
+## 📄 الرخصة
 
-**الملف:** `app/Http/Controllers/TaskController.php`
-**الأمر:** `php artisan make:controller TaskController`
-
-#### الدوال المطلوبة:
-
-| الدالة | الوصف | Method | Route |
-|--------|-------|--------|-------|
-| `index()` | عرض قائمة المهام مع فلترة وترتيب | GET | `/tasks` |
-| `create()` | عرض صفحة إنشاء مهمة جديدة | GET | `/tasks/create` |
-| `store()` | حفظ المهمة الجديدة | POST | `/tasks` |
-| `show($id)` | عرض تفاصيل مهمة | GET | `/tasks/{id}` |
-| `edit($id)` | عرض صفحة تعديل مهمة | GET | `/tasks/{id}/edit` |
-| `update()` | تحديث المهمة | PUT/PATCH | `/tasks/{id}` |
-| `destroy($id)` | حذف مهمة | DELETE | `/tasks/{id}` |
-| `toggleStatus($id)` | تبديل حالة المهمة (مكتمل/غير مكتمل) | PATCH | `/tasks/{id}/toggle` |
-| `reorderPriorities()` | إعادة ترتيب الأولويات ذكياً | POST | `/tasks/reorder` |
-
-#### الكود التفصيلي:
-
-```php
-<?php
-
-namespace App\Http\Controllers;
-
-use App\Models\Task;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-
-class TaskController extends Controller
-{
-    // ========== عرض كل المهام مع فلترة ==========
-    public function index(Request $request)
-    {
-        $query = Task::where('user_id', Auth::id())->with('subject');
-
-        // فلترة حسب الحالة
-        if ($request->filled('status')) {
-            $query->where('status', $request->status);
-        }
-
-        // فلترة حسب الأولوية
-        if ($request->filled('priority')) {
-            $query->where('priority', $request->priority);
-        }
-
-        // فلترة حسب المادة
-        if ($request->filled('subject_id')) {
-            $query->where('subject_id', $request->subject_id);
-        }
-
-        // فلترة: المهام المتأخرة
-        if ($request->boolean('overdue')) {
-            $query->where('due_date', '<', now())
-                  ->where('status', '!=', 'completed');
-        }
-
-        // ترتيب: الأقرب موعداً أولاً
-        $tasks = $query->orderByRaw("
-            CASE priority
-                WHEN 'urgent' THEN 1
-                WHEN 'high' THEN 2
-                WHEN 'medium' THEN 3
-                WHEN 'low' THEN 4
-            END
-        ")->orderBy('due_date', 'asc')->paginate(15);
-
-        $subjects = Auth::user()->subjects;
-
-        return view('tasks.index', compact('tasks', 'subjects'));
-    }
-
-    // ========== عرض صفحة إنشاء مهمة ==========
-    public function create()
-    {
-        $subjects = Auth::user()->subjects;
-        return view('tasks.create', compact('subjects'));
-    }
-
-    // ========== حفظ مهمة جديدة ==========
-    public function store(Request $request)
-    {
-        $validated = $request->validate([
-            'title'       => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'subject_id'  => 'nullable|exists:subjects,id',
-            'priority'    => 'required|in:low,medium,high,urgent',
-            'due_date'    => 'nullable|date|after:now',
-        ]);
-
-        $validated['user_id'] = Auth::id();
-        $validated['status'] = 'pending';
-
-        Task::create($validated);
-
-        return redirect()->route('tasks.index')
-            ->with('success', 'تم إنشاء المهمة بنجاح.');
-    }
-
-    // ========== عرض مهمة محددة ==========
-    public function show($id)
-    {
-        $task = Task::where('user_id', Auth::id())
-            ->where('id', $id)
-            ->with('subject')
-            ->firstOrFail();
-
-        return view('tasks.show', compact('task'));
-    }
-
-    // ========== عرض صفحة التعديل ==========
-    public function edit($id)
-    {
-        $task = Task::where('user_id', Auth::id())
-            ->where('id', $id)
-            ->firstOrFail();
-
-        $subjects = Auth::user()->subjects;
-        return view('tasks.edit', compact('task', 'subjects'));
-    }
-
-    // ========== تحديث مهمة ==========
-    public function update(Request $request, $id)
-    {
-        $task = Task::where('user_id', Auth::id())
-            ->where('id', $id)
-            ->firstOrFail();
-
-        $validated = $request->validate([
-            'title'       => 'required|string|max:255',
-            'description' => 'nullable|string',
-            'subject_id'  => 'nullable|exists:subjects,id',
-            'priority'    => 'required|in:low,medium,high,urgent',
-            'status'      => 'required|in:pending,in_progress,completed',
-            'due_date'    => 'nullable|date',
-        ]);
-
-        // إذا تم تحديد المهمة كمكتملة، سجّل وقت الإنجاز
-        if ($validated['status'] === 'completed' && $task->status !== 'completed') {
-            $validated['completed_at'] = now();
-        }
-
-        $task->update($validated);
-
-        return redirect()->route('tasks.index')
-            ->with('success', 'تم تحديث المهمة بنجاح.');
-    }
-
-    // ========== حذف مهمة ==========
-    public function destroy($id)
-    {
-        $task = Task::where('user_id', Auth::id())
-            ->where('id', $id)
-            ->firstOrFail();
-
-        $task->delete();
-
-        return redirect()->route('tasks.index')
-            ->with('success', 'تم حذف المهمة.');
-    }
-
-    // ========== تبديل حالة المهمة (AJAX) ==========
-    public function toggleStatus($id)
-    {
-        $task = Task::where('user_id', Auth::id())
-            ->where('id', $id)
-            ->firstOrFail();
-
-        if ($task->status === 'completed') {
-            $task->update([
-                'status'       => 'pending',
-                'completed_at' => null,
-            ]);
-        } else {
-            $task->update([
-                'status'       => 'completed',
-                'completed_at' => now(),
-            ]);
-        }
-
-        return response()->json([
-            'status'       => $task->status,
-            'completed_at' => $task->completed_at?->format('Y-m-d H:i'),
-        ]);
-    }
-
-    // ========== إعادة ترتيب الأولويات ذكياً ==========
-    public function reorderPriorities()
-    {
-        $tasks = Task::where('user_id', Auth::id())
-            ->where('status', '!=', 'completed')
-            ->get();
-
-        foreach ($tasks as $task) {
-            $newPriority = $this->calculateSmartPriority($task);
-            $task->update(['priority' => $newPriority]);
-        }
-
-        return redirect()->route('tasks.index')
-            ->with('success', 'تم إعادة ترتيب الأولويات بناءً على الموعد والأهمية.');
-    }
-
-    /**
-     * حساب الأولوية الذكية للمهمة
-     * كلما اقترب الموعد وزادت الأهمية، ارتفعت الأولوية
-     */
-    private function calculateSmartPriority(Task $task): string
-    {
-        if (!$task->due_date) return 'medium';
-
-        $daysLeft = now()->diffInDays($task->due_date, false);
-
-        if ($daysLeft < 0) return 'urgent';       // متأخر
-        if ($daysLeft <= 1) return 'urgent';       // غداً
-        if ($daysLeft <= 3) return 'high';         // خلال 3 أيام
-        if ($daysLeft <= 7) return 'medium';       // خلال أسبوع
-        return 'low';                              // أكثر من أسبوع
-    }
-}
-```
-
----
-
-### 6. 📅 وحدة تحكم خطة الدراسة — ScheduleController
-
-**الملف:** `app/Http/Controllers/ScheduleController.php`
-**الأمر:** `php artisan make:controller ScheduleController`
-
-#### الدوال المطلوبة:
-
-| الدالة | الوصف | Method | Route |
-|--------|-------|--------|-------|
-| `index()` | عرض خطط الدراسة | GET | `/plans` |
-| `create()` | عرض صفحة إنشاء خطة | GET | `/plans/create` |
-| `store()` | حفظ خطة جديدة (بناءً على خوارزمية ذكية) | POST | `/plans` |
-| `show($id)` | عرض خطة محددة بالتفصيل | GET | `/plans/{id}` |
-| `destroy($id)` | حذف خطة | DELETE | `/plans/{id}` |
-| `activateCrisisMode()` | تفعيل وضع الأزمة يدوياً | POST | `/plans/crisis` |
-
-#### الكود التفصيلي:
-
-```php
-<?php
-
-namespace App\Http\Controllers;
-
-use App\Models\StudyPlan;
-use App\Models\Subject;
-use App\Services\ScheduleGenerator;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-
-class ScheduleController extends Controller
-{
-    protected $scheduleGenerator;
-
-    public function __construct(ScheduleGenerator $scheduleGenerator)
-    {
-        $this->scheduleGenerator = $scheduleGenerator;
-    }
-
-    // ========== عرض كل الخطط ==========
-    public function index()
-    {
-        $plans = Auth::user()->studyPlans()
-            ->with('subjects')
-            ->latest()
-            ->paginate(10);
-
-        return view('plans.index', compact('plans'));
-    }
-
-    // ========== عرض صفحة إنشاء خطة ==========
-    public function create()
-    {
-        $subjects = Auth::user()->subjects;
-        $exams = Auth::user()->exams()
-            ->where('exam_date', '>', now())
-            ->orderBy('exam_date')
-            ->get();
-
-        return view('plans.create', compact('subjects', 'exams'));
-    }
-
-    // ========== إنشاء خطة دراسية ذكية ==========
-    public function store(Request $request)
-    {
-        $validated = $request->validate([
-            'name'              => 'required|string|max:255',
-            'start_date'        => 'required|date',
-            'end_date'          => 'required|date|after:start_date',
-            'subjects'          => 'required|array|min:1',
-            'subjects.*.id'     => 'required|exists:subjects,id',
-            'subjects.*.hours'  => 'required|numeric|min:0.5|max:12',
-            'daily_study_hours' => 'required|numeric|min:1|max:16',
-            'preferred_days'    => 'nullable|array',
-            'preferred_days.*'  => 'in:saturday,sunday,monday,tuesday,wednesday,thursday,friday',
-        ]);
-
-        // إنشاء الخطة
-        $plan = StudyPlan::create([
-            'user_id'            => Auth::id(),
-            'name'               => $validated['name'],
-            'start_date'         => $validated['start_date'],
-            'end_date'           => $validated['end_date'],
-            'total_study_hours'  => collect($validated['subjects'])->sum('hours'),
-        ]);
-
-        // استدعاء خوارزمية الجدولة الذكية
-        $schedule = $this->scheduleGenerator->generate(
-            $plan,
-            $validated['subjects'],
-            $validated['daily_study_hours'],
-            $validated['preferred_days'] ?? null
-        );
-
-        // ربط المواد بالخطة عبر الجدول الوسيط
-        foreach ($schedule as $entry) {
-            $plan->subjects()->attach($entry['subject_id'], [
-                'allocated_hours' => $entry['hours'],
-                'day_of_week'     => $entry['day'],
-                'start_time'      => $entry['start_time'] ?? null,
-                'end_time'        => $entry['end_time'] ?? null,
-            ]);
-        }
-
-        return redirect()->route('plans.show', $plan->id)
-            ->with('success', 'تم إنشاء خطة المذاكرة بنجاح!');
-    }
-
-    // ========== عرض خطة محددة ==========
-    public function show($id)
-    {
-        $plan = StudyPlan::where('user_id', Auth::id())
-            ->where('id', $id)
-            ->with('subjects')
-            ->firstOrFail();
-
-        // ترتيب المواد حسب الأيام
-        $scheduleByDay = $plan->subjects->groupBy('pivot.day_of_week');
-
-        return view('plans.show', compact('plan', 'scheduleByDay'));
-    }
-
-    // ========== حذف خطة ==========
-    public function destroy($id)
-    {
-        $plan = StudyPlan::where('user_id', Auth::id())
-            ->where('id', $id)
-            ->firstOrFail();
-
-        $plan->delete();
-
-        return redirect()->route('plans.index')
-            ->with('success', 'تم حذف الخطة.');
-    }
-
-    // ========== تفعيل وضع الأزمة ==========
-    public function activateCrisisMode(Request $request)
-    {
-        $validated = $request->validate([
-            'plan_id' => 'required|exists:study_plans,id',
-        ]);
-
-        $plan = StudyPlan::where('user_id', Auth::id())
-            ->where('id', $validated['plan_id'])
-            ->firstOrFail();
-
-        // تفعيل وضع الأزمة
-        $plan->update(['is_crisis_mode' => true]);
-
-        // جلب الاختبارات القريبة
-        $upcomingExams = Auth::user()->exams()
-            ->whereBetween('exam_date', [now(), now()->addDays(5)])
-            ->orderBy('exam_date')
-            ->get();
-
-        // إعادة ترتيب المواد: الأقرب اختباراً يحصل على ساعات أكثر
-        foreach ($plan->subjects as $subject) {
-            $nearestExam = $upcomingExams->firstWhere('subject_id', $subject->id);
-            if ($nearestExam) {
-                $daysUntilExam = now()->diffInDays($nearestExam->exam_date);
-                // كلما الاختبار أقرب، زادت الساعات
-                $extraHours = max(1, 5 - $daysUntilExam);
-
-                $plan->subjects()->updateExistingPivot($subject->id, [
-                    'allocated_hours' => $subject->pivot->allocated_hours + $extraHours,
-                ]);
-            }
-        }
-
-        // تحويل المهام غير المكتملة إلى وضع أزمة
-        Auth::user()->tasks()
-            ->where('status', '!=', 'completed')
-            ->update(['is_crisis' => true]);
-
-        return back()->with('warning', '🚨 تم تفعيل وضع الأزمة! تم إعادة ترتيب الأولويات.');
-    }
-}
-```
-
----
-
-### 7. 📚 وحدة تحكم المواد — SubjectController
-
-**الملف:** `app/Http/Controllers/SubjectController.php`
-**الأمر:** `php artisan make:controller SubjectController`
-
-#### الدوال المطلوبة:
-
-| الدالة | الوصف | Method | Route |
-|--------|-------|--------|-------|
-| `index()` | عرض قائمة المواد | GET | `/subjects` |
-| `store()` | إضافة مادة جديدة | POST | `/subjects` |
-| `update()` | تعديل مادة | PUT | `/subjects/{id}` |
-| `destroy()` | حذف مادة | DELETE | `/subjects/{id}` |
-
-#### الكود التفصيلي:
-
-```php
-<?php
-
-namespace App\Http\Controllers;
-
-use App\Models\Subject;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-
-class SubjectController extends Controller
-{
-    // ========== عرض كل المواد ==========
-    public function index()
-    {
-        $subjects = Auth::user()->subjects()
-            ->withCount(['tasks', 'summaries', 'exams'])
-            ->latest()
-            ->get();
-
-        return view('subjects.index', compact('subjects'));
-    }
-
-    // ========== إضافة مادة جديدة ==========
-    public function store(Request $request)
-    {
-        $validated = $request->validate([
-            'name'          => 'required|string|max:255',
-            'code'          => 'nullable|string|max:50',
-            'color'         => 'nullable|string|max:7',  // hex color
-            'difficulty'    => 'required|in:easy,medium,hard',
-            'credit_hours'  => 'nullable|integer|min:1|max:10',
-            'description'   => 'nullable|string|max:1000',
-        ]);
-
-        $validated['user_id'] = Auth::id();
-
-        Subject::create($validated);
-
-        return redirect()->route('subjects.index')
-            ->with('success', 'تمت إضافة المادة بنجاح.');
-    }
-
-    // ========== تعديل مادة ==========
-    public function update(Request $request, $id)
-    {
-        $subject = Subject::where('user_id', Auth::id())
-            ->where('id', $id)
-            ->firstOrFail();
-
-        $validated = $request->validate([
-            'name'          => 'required|string|max:255',
-            'code'          => 'nullable|string|max:50',
-            'color'         => 'nullable|string|max:7',
-            'difficulty'    => 'required|in:easy,medium,hard',
-            'credit_hours'  => 'nullable|integer|min:1|max:10',
-            'description'   => 'nullable|string|max:1000',
-        ]);
-
-        $subject->update($validated);
-
-        return redirect()->route('subjects.index')
-            ->with('success', 'تم تحديث المادة.');
-    }
-
-    // ========== حذف مادة ==========
-    public function destroy($id)
-    {
-        $subject = Subject::where('user_id', Auth::id())
-            ->where('id', $id)
-            ->firstOrFail();
-
-        $subject->delete();
-
-        return redirect()->route('subjects.index')
-            ->with('success', 'تم حذف المادة.');
-    }
-}
-```
-
----
-
-### 8. 📋 وحدة تحكم الاختبارات — ExamController
-
-**الملف:** `app/Http/Controllers/ExamController.php`
-**الأمر:** `php artisan make:controller ExamController`
-
-#### الدوال المطلوبة:
-
-| الدالة | الوصف | Method | Route |
-|--------|-------|--------|-------|
-| `index()` | عرض الاختبارات | GET | `/exams` |
-| `store()` | إضافة اختبار | POST | `/exams` |
-| `update()` | تعديل اختبار | PUT | `/exams/{id}` |
-| `destroy()` | حذف اختبار | DELETE | `/exams/{id}` |
-
-#### الكود التفصيلي:
-
-```php
-<?php
-
-namespace App\Http\Controllers;
-
-use App\Models\Exam;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-
-class ExamController extends Controller
-{
-    // ========== عرض الاختبارات ==========
-    public function index(Request $request)
-    {
-        $query = Exam::where('user_id', Auth::id())->with('subject');
-
-        // فلترة: القادمة فقط
-        if ($request->boolean('upcoming')) {
-            $query->where('exam_date', '>', now());
-        }
-
-        // فلترة: حسب المادة
-        if ($request->filled('subject_id')) {
-            $query->where('subject_id', $request->subject_id);
-        }
-
-        $exams = $query->orderBy('exam_date', 'asc')->paginate(15);
-        $subjects = Auth::user()->subjects;
-
-        return view('exams.index', compact('exams', 'subjects'));
-    }
-
-    // ========== إضافة اختبار ==========
-    public function store(Request $request)
-    {
-        $validated = $request->validate([
-            'subject_id' => 'required|exists:subjects,id',
-            'title'      => 'required|string|max:255',
-            'exam_date'  => 'required|date|after:now',
-            'exam_type'  => 'required|in:quiz,midterm,final,oral,practical',
-            'location'   => 'nullable|string|max:255',
-            'notes'      => 'nullable|string',
-        ]);
-
-        $validated['user_id'] = Auth::id();
-
-        Exam::create($validated);
-
-        return redirect()->route('exams.index')
-            ->with('success', 'تمت إضافة الاختبار بنجاح.');
-    }
-
-    // ========== تعديل اختبار ==========
-    public function update(Request $request, $id)
-    {
-        $exam = Exam::where('user_id', Auth::id())
-            ->where('id', $id)
-            ->firstOrFail();
-
-        $validated = $request->validate([
-            'subject_id' => 'required|exists:subjects,id',
-            'title'      => 'required|string|max:255',
-            'exam_date'  => 'required|date',
-            'exam_type'  => 'required|in:quiz,midterm,final,oral,practical',
-            'location'   => 'nullable|string|max:255',
-            'notes'      => 'nullable|string',
-            'grade'      => 'nullable|numeric|min:0',
-            'max_grade'  => 'nullable|numeric|min:0',
-        ]);
-
-        $exam->update($validated);
-
-        return redirect()->route('exams.index')
-            ->with('success', 'تم تحديث الاختبار.');
-    }
-
-    // ========== حذف اختبار ==========
-    public function destroy($id)
-    {
-        $exam = Exam::where('user_id', Auth::id())
-            ->where('id', $id)
-            ->firstOrFail();
-
-        $exam->delete();
-
-        return redirect()->route('exams.index')
-            ->with('success', 'تم حذف الاختبار.');
-    }
-}
-```
-
----
-
-### 9. 🔔 وحدة تحكم التنبيهات — NotificationController
-
-**الملف:** `app/Http/Controllers/NotificationController.php`
-**الأمر:** `php artisan make:controller NotificationController`
-
-#### الدوال المطلوبة:
-
-| الدالة | الوصف | Method | Route |
-|--------|-------|--------|-------|
-| `index()` | عرض كل التنبيهات | GET | `/notifications` |
-| `markAsRead($id)` | تحديد تنبيه كمقروء | PATCH | `/notifications/{id}/read` |
-| `markAllRead()` | تحديد الكل كمقروء | POST | `/notifications/read-all` |
-
-#### الكود التفصيلي:
-
-```php
-<?php
-
-namespace App\Http\Controllers;
-
-use App\Models\Notification;
-use Illuminate\Support\Facades\Auth;
-
-class NotificationController extends Controller
-{
-    // ========== عرض التنبيهات ==========
-    public function index()
-    {
-        $notifications = Notification::where('user_id', Auth::id())
-            ->latest()
-            ->paginate(20);
-
-        $unreadCount = Notification::where('user_id', Auth::id())
-            ->where('is_read', false)
-            ->count();
-
-        return view('notifications.index', compact('notifications', 'unreadCount'));
-    }
-
-    // ========== تحديد تنبيه كمقروء ==========
-    public function markAsRead($id)
-    {
-        $notification = Notification::where('user_id', Auth::id())
-            ->where('id', $id)
-            ->firstOrFail();
-
-        $notification->markAsRead();
-
-        return response()->json(['status' => 'read']);
-    }
-
-    // ========== تحديد الكل كمقروء ==========
-    public function markAllRead()
-    {
-        Notification::where('user_id', Auth::id())
-            ->where('is_read', false)
-            ->update(['is_read' => true, 'read_at' => now()]);
-
-        return back()->with('success', 'تم تحديد كل التنبيهات كمقروءة.');
-    }
-}
-```
-
----
-
-### 🔗 ملخص الـ Routes
-
-ضع الكود التالي في ملف `routes/web.php`:
-
-```php
-use App\Http\Controllers\{
-    AuthController,
-    DashboardController,
-    SummaryController,
-    AssistantController,
-    TaskController,
-    ScheduleController,
-    SubjectController,
-    ExamController,
-    NotificationController
-};
-
-// ========== صفحات عامة (بدون تسجيل دخول) ==========
-Route::get('/register', [AuthController::class, 'showRegisterForm'])->name('register');
-Route::post('/register', [AuthController::class, 'register']);
-Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
-Route::post('/login', [AuthController::class, 'login']);
-
-// ========== صفحات محمية (تتطلب تسجيل دخول) ==========
-Route::middleware('auth')->group(function () {
-
-    // خروج
-    Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
-
-    // الملف الشخصي
-    Route::get('/profile', [AuthController::class, 'profile'])->name('profile');
-    Route::put('/profile', [AuthController::class, 'updateProfile'])->name('profile.update');
-
-    // لوحة التحكم
-    Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
-
-    // المواد الدراسية
-    Route::resource('subjects', SubjectController::class)->except(['create', 'show', 'edit']);
-
-    // المهام
-    Route::resource('tasks', TaskController::class);
-    Route::patch('/tasks/{id}/toggle', [TaskController::class, 'toggleStatus'])->name('tasks.toggle');
-    Route::post('/tasks/reorder', [TaskController::class, 'reorderPriorities'])->name('tasks.reorder');
-
-    // الملخصات
-    Route::resource('summaries', SummaryController::class);
-    Route::post('/summaries', [SummaryController::class, 'store'])->name('summaries.store');
-
-    // خطط الدراسة
-    Route::resource('plans', ScheduleController::class);
-    Route::post('/plans/crisis', [ScheduleController::class, 'activateCrisisMode'])->name('plans.crisis');
-
-    // الاختبارات
-    Route::resource('exams', ExamController::class)->except(['create', 'show', 'edit']);
-
-    // المساعد الذكي
-    Route::get('/assistant', [AssistantController::class, 'index'])->name('assistant');
-    Route::post('/assistant/chat', [AssistantController::class, 'chat'])->name('assistant.chat');
-    Route::get('/assistant/history', [AssistantController::class, 'history'])->name('assistant.history');
-    Route::post('/assistant/generate-quiz', [AssistantController::class, 'generateQuiz'])->name('assistant.quiz');
-
-    // التنبيهات
-    Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
-    Route::patch('/notifications/{id}/read', [NotificationController::class, 'markAsRead'])->name('notifications.read');
-    Route::post('/notifications/read-all', [NotificationController::class, 'markAllRead'])->name('notifications.readAll');
-
-    // الصفحة الرئيسية → Dashboard
-    Route::get('/', fn() => redirect()->route('dashboard'));
-});
-```
-
----
-
-### 📊 ملخص الـ Controllers
-
-| # | Controller | الدوال | المسؤولية |
-|---|-----------|--------|-----------|
-| 1 | `AuthController` | 7 | التسجيل، الدخول، الخروج، الملف الشخصي |
-| 2 | `DashboardController` | 1 | عرض لوحة التحكم الشاملة |
-| 3 | `SummaryController` | 5 | رفع الملفات، التلخيص بالـ AI، عرض الملخصات |
-| 4 | `AssistantController` | 4 | المحادثة الذكية، توليد الأسئلة |
-| 5 | `TaskController` | 9 | CRUD المهام + تبديل الحالة + ترتيب ذكي |
-| 6 | `ScheduleController` | 6 | خطط المذاكرة + وضع الأزمة |
-| 7 | `SubjectController` | 4 | CRUD المواد الدراسية |
-| 8 | `ExamController` | 4 | CRUD الاختبارات |
-| 9 | `NotificationController` | 3 | عرض وتحديد التنبيهات |
-
----
-
-### 🚀 أوامر إنشاء الـ Controllers
-
-```bash
-php artisan make:controller AuthController
-php artisan make:controller DashboardController
-php artisan make:controller SummaryController
-php artisan make:controller AssistantController
-php artisan make:controller TaskController
-php artisan make:controller ScheduleController
-php artisan make:controller SubjectController
-php artisan make:controller ExamController
-php artisan make:controller NotificationController
-```
-
----
-
-## 🧩 أقسام إضافية مقترحة للتنفيذ
-
-هذه أقسام لم تُضف بعد ككود، وهي خطوات تنفيذية واجبة لإنجاز المشروع بالكامل. كل قسم يحتوي وصف المطلوب فقط — بدون كود — لتنفيذه لاحقاً بالتتابع.
-
----
-
-### 📦 القسم الأول: الخدمات (Services)
-
-الـ Services هي طبقة منطقية بين الـ Controller والـ Model. نقلنا المنطق المعقد إلى ملفات منفصلة عشان نظف الكود ونسهّل صيانته.
-
-#### 1. AIService.php — خدمة الذكاء الاصطناعي
-
-**المسار:** `app/Services/AIService.php`
-
-**المطلوب:**
-- ربط مع OpenAI API (أو أي مزود AI مثل Gemini)
-- دالة `summarize($text, $level)` — تاخذ نص ومستوى تلخيص وترجع ملخص
-- دالة `chat($history, $message)` — تاخذ سجل المحادثة ورسالة جديدة وترجع رد
-- دالة `generateQuiz($subject, $topic, $type, $count, $difficulty)` — توليد أسئلة
-- إعداد الـ API Key من ملف `.env`
-- معالجة الأخطاء (timeout, rate limit, invalid response)
-- logging لكل طلب AI لتتبع الاستهلاك
-
-#### 2. SummaryService.php — خدمة التلخيص
-
-**المسار:** `app/Services/SummaryService.php`
-
-**المطلوب:**
-- دالة `extractTextFromPdf($filePath)` — استخراج نص من ملف PDF
-- دالة `cleanText($text)` — تنظيف النص من الرموز والمسافات الزائدة
-- دالة `splitTextIntoChunks($text, $maxTokens)` — تقسيم نص طويل لأجزاء (عشان API له حد tokens)
-- دالة `calculateReadingTime($wordCount)` — حساب وقت القراءة المقدر
-- التعامل مع ملفات PDF المحمية أو الفارغة
-
-#### 3. ScheduleGenerator.php — خدمة الجدولة
-
-**المسار:** `app/Services/ScheduleGenerator.php`
-
-**المطلوب:**
-- دالة `generate($plan, $subjects, $dailyHours, $preferredDays)` — الخوارزمية الرئيسية
-- توزيع المواد على أيام الأسبوع بناءً على:
-  - صعوبة كل مادة (easy/medium/hard → ساعات مختلفة)
-  - مواعيد الاختبارات القادمة (الأقرب يحصل أولوية)
-  - الأيام المفضلة للطالب
-  - ساعات الدراسة اليومية المتاحة
-- مراعاة فترات الراحة بين المواد
-- عدم تعيين أكثر من مادتين صعبتين في نفس اليوم
-- دالة `generateCrisisPlan($plan, $upcomingExams)` — خطة أزمة مكثفة
-
----
-
-### 🎨 القسم الثاني: واجهات العرض (Blade Views)
-
-كل صفحة تحتاج ملف Blade. هذه قائمة الصفحات المطلوبة بالترتيب:
-
-#### صفحات المصادقة:
-| الصفحة | الملف | الوصف |
-|--------|-------|-------|
-| تسجيل | `resources/views/auth/register.blade.php` | فورم: اسم، إيميل، كلمة مرور، جامعة، تخصص |
-| دخول | `resources/views/auth/login.blade.php` | فورم: إيميل + كلمة مرور + تذكرني |
-| الملف الشخصي | `resources/views/auth/profile.blade.php` | عرض + تعديل بيانات الطالب + رفع صورة |
-
-#### الصفحة الرئيسية:
-| الصفحة | الملف | الوصف |
-|--------|-------|-------|
-| لوحة التحكم | `resources/views/dashboard.blade.php` | بطاقات إحصائية، اختبارات قادمة، شريط تقدم، تنبيهات |
-
-#### صفحات المواد:
-| الصفحة | الملف | الوصف |
-|--------|-------|-------|
-| قائمة المواد | `resources/views/subjects/index.blade.php` | كروت المواد مع عدد المهام والاختبارات لكل مادة |
-
-#### صفحات المهام:
-| الصفحة | الملف | الوصف |
-|--------|-------|-------|
-| قائمة المهام | `resources/views/tasks/index.blade.php` | فلترة + ترتيب + كروت مهام مع ألوان أولوية |
-| إنشاء مهمة | `resources/views/tasks/create.blade.php` | فورم: عنوان، وصف، مادة، أولوية، موعد |
-| تعديل مهمة | `resources/views/tasks/edit.blade.php` | نفس الفورم مع بيانات موجودة |
-| تفاصيل مهمة | `resources/views/tasks/show.blade.php` | عرض كامل + تبديل الحالة |
-
-#### صفحات الملخصات:
-| الصفحة | الملف | الوصف |
-|--------|-------|-------|
-| قائمة الملخصات | `resources/views/summaries/index.blade.php` | كروت ملخصات مع نسبة التلخيص |
-| إنشاء ملخص | `resources/views/summaries/create.blade.php` | رفع PDF أو لصق نص + اختيار مستوى |
-| عرض ملخص | `resources/views/summaries/show.blade.php` | النص الأصلي ↔ الملخص جنب بعض + إحصائيات |
-
-#### صفحات المساعد الذكي:
-| الصفحة | الملف | الوصف |
-|--------|-------|-------|
-| المحادثة | `resources/views/assistant/index.blade.php` | واجهة chat مثل ChatGPT + اختيار مادة |
-| سجل المحادثات | `resources/views/assistant/history.blade.php` | عرض المحادثات السابقة مرتبة بالتاريخ |
-
-#### صفحات خطط الدراسة:
-| الصفحة | الملف | الوصف |
-|--------|-------|-------|
-| قائمة الخطط | `resources/views/plans/index.blade.php` | كروت خطط مع حالة (فعّالة/منتهية/أزمة) |
-| إنشاء خطة | `resources/views/plans/create.blade.php` | اختيار مواد + ساعات + أيام مفضلة |
-| عرض خطة | `resources/views/plans/show.blade.php` | جدول أسبوعي ملون + زر وضع الأزمة |
-
-#### صفحات الاختبارات:
-| الصفحة | الملف | الوصف |
-|--------|-------|-------|
-| قائمة الاختبارات | `resources/views/exams/index.blade.php` | كروت اختبارات مع عد تنازلي |
-
-#### صفحات التنبيهات:
-| الصفحة | الملف | الوصف |
-|--------|-------|-------|
-| التنبيهات | `resources/views/notifications/index.blade.php` | قائمة تنبيهات مع تحديد كمقروء |
-
-#### القوالب المشتركة:
-| الملف | الوصف |
-|-------|-------|
-| `resources/views/layouts/app.blade.php` | القالب الرئيسي (Header + Sidebar + Footer +yield content) |
-| `resources/views/partials/sidebar.blade.php` | القائمة الجانبية (روابط + عداد تنبيهات) |
-| `resources/views/partials/navbar.blade.php` | الشريط العلوي (اسم المستخدم + صورة + بحث) |
-| `resources/views/partials/crisis-banner.blade.php` | بانر أحمر يظهر في وضع الأزمة |
-
----
-
-### 📡 القسم الثالث: الـ API Endpoints (لتطبيق موبايل مستقبلاً)
-
-لو حابين يصيرون يبنون تطبيق موبايل لاحقاً، لازم نجهز API endpoints. هذه مسارات `routes/api.php`:
-
-| Method | Endpoint | الوصف | Auth |
-|--------|----------|-------|------|
-| POST | `/api/login` | تسجيل دخول → يرجع token | ❌ |
-| POST | `/api/register` | تسجيل حساب جديد | ❌ |
-| GET | `/api/dashboard` | بيانات لوحة التحكم | ✅ |
-| GET | `/api/subjects` | قائمة المواد | ✅ |
-| POST | `/api/subjects` | إضافة مادة | ✅ |
-| GET | `/api/tasks` | قائمة المهام (مع فلترة) | ✅ |
-| POST | `/api/tasks` | إنشاء مهمة | ✅ |
-| PATCH | `/api/tasks/{id}/toggle` | تبديل حالة مهمة | ✅ |
-| GET | `/api/summaries` | قائمة الملخصات | ✅ |
-| POST | `/api/summaries` | إنشاء ملخص | ✅ |
-| GET | `/api/plans` | قائمة خطط الدراسة | ✅ |
-| POST | `/api/plans` | إنشاء خطة | ✅ |
-| POST | `/api/plans/crisis` | تفعيل وضع الأزمة | ✅ |
-| GET | `/api/exams` | قائمة الاختبارات | ✅ |
-| POST | `/api/exams` | إضافة اختبار | ✅ |
-| POST | `/api/assistant/chat` | محادثة مع المساعد | ✅ |
-| POST | `/api/assistant/quiz` | توليد أسئلة | ✅ |
-| GET | `/api/notifications` | التنبيهات | ✅ |
-| POST | `/api/notifications/read-all` | تحديد الكل كمقروء | ✅ |
-
-**المطلوب:**
-- استخدام Laravel Sanctum للمصادقة عبر API Tokens
-- ترجيع البيانات بصيغة JSON دائماً
-- إضافة `Accept: application/json` header
-- توثيق الـ API باستخدام أداة مثل Swagger أو Scribe
-
----
-
-### 🔧 القسم الرابع: Middleware إضافي
-
-| Middleware | الوصف |
-|-----------|-------|
-| `auth` | التأكد من تسجيل الدخول (يأتي جاهز مع Laravel) |
-| `guest` | منع المستخدم المسجل من دخول صفحات التسجيل/الدخول |
-| `VerifyCsrfToken` | حماية من هجمات CSRF (جاهز مع Laravel) |
-| `throttle:60,1` | تحديد عدد الطلبات (60 طلب/دقيقة) مهم لـ AI endpoints |
-
-**المطلوب:**
-- تطبيق `throttle` على مسارات AI (`/assistant/chat`, `/summaries`) عشان منع إساءة الاستخدام
-- تطبيق `auth` على كل المسارات المحمية (تم ذكره في Routes)
-
----
-
-### 🧪 القسم الخامس: خطة الاختبار
-
-#### اختبارات يدوية (Manual Testing):
-
-| # | الاختبار | الخطوات | النتيجة المتوقعة |
-|---|---------|---------|-----------------|
-| 1 | تسجيل مستخدم جديد | فتح /register → تعبئة البيانات → إرسال | يتم إنشاء حساب وتحويل لـ Dashboard |
-| 2 | تسجيل دخول خاطئ | إدخال إيميل صحيح + كلمة مرور خاطئة | ظهور رسالة خطأ |
-| 3 | إضافة مادة | Dashboard → المواد → إضافة → تعبئة | تظهر المادة في القائمة |
-| 4 | رفع PDF وتلخيصه | الملخصات → جديد → رفع PDF → تلخيص | ظهور الملخص خلال 10-30 ثانية |
-| 5 | لصق نص وتلخيصه | الملخصات → جديد → لصق نص → تلخيص مختصر | الملخص أقصر من الأصلي بنسبة واضحة |
-| 6 | محادثة مع المساعد | المساعد → كتابة سؤال → إرسال | رد ذكي يخص المادة خلال 5-15 ثانية |
-| 7 | توليد أسئلة | المساعد → توليد أسئلة → اختيار مادة ونوع | 5-10 أسئلة منوعة مع إجابات |
-| 8 | إنشاء مهمة | المهام → جديدة → تعبئة | تظهر في القائمة مع اللون المناسب |
-| 9 | إكمال مهمة | الضغط على checkbox المهمة | تتغير حالتها وتتحرك للأسفل |
-| 10 | إنشاء خطة مذاكرة | الخطط → جديدة → اختيار مواد | جدول أسبوعي متوازن |
-| 11 | تفعيل وضع الأزمة | الخطط → تفعيل الأزمة | بانر أحمر + إعادة ترتيب الأولويات |
-| 12 | إضافة اختبار | الاختبارات → إضافة → تعبئة | يظهر مع عد تنازلي |
-| 13 | اختبار خلال يومين | إضافة اختبار قريب → فتح Dashboard | وضع الأزمة يتفعل تلقائياً |
-| 14 | حذف ملخص | الملخصات → حذف | يتم حذف الملخص والملف |
-
-#### اختبارات أداء (Performance Testing):
-
-| المقياس | الهدف | طريقة القياس |
-|---------|-------|-------------|
-| زمن تحميل Dashboard | < 2 ثانية | Laravel Debugbar |
-| زمن التلخيص (نص 5000 كلمة) | < 30 ثانية | Timer يدوي |
-| زمن رد المساعد | < 15 ثانية | Timer يدوي |
-| عدد المستخدمين المتزامنين | 50+ | Apache Bench أو JMeter |
-| حجم ملف PDF الأقصى | 20MB | اختبار بملفات مختلفة الأحجام |
-
-#### اختبارات أمنية (Security Testing):
-
-| الاختبار | الوصف |
-|---------|-------|
-| SQL Injection | إدخال أوامر SQL في حقول الإدخال |
-| XSS | إدخال JavaScript في الحقول النصية |
-| CSRF | التأكد من توكن CSRF في كل فورم |
-| Authorization | محاولة وصول لبيانات مستخدم آخر |
-| File Upload | رفع ملفات غير PDF (exe, php, sh) |
-| Brute Force | محاولة تسجيل دخول 100 مرة |
-
----
-
-### 📐 القسم السادس: تصميم قاعدة البيانات (ER Diagram)
-
-**المطلوب رسم ER Diagram يوضح:**
-- 9 جداول (users, subjects, tasks, summaries, study_plans, plan_subject, exams, chat_messages, notifications)
-- العلاقات بينها (One-to-Many, Many-to-Many)
-- المفاتيح الأجنبية (Foreign Keys)
-- أنواع البيانات لكل حقل
-
-**أدوات مقترحة للرسم:**
-- draw.io (مجاني)
-- dbdiagram.io (مجاني — يكتب كود ويرسم)
-- MySQL Workbench (يولّد تلقائياً من قاعدة البيانات)
-
----
-
-### 🎯 القسم السابع: خوارزميات مهمة
-
-#### 1. خوارزمية ترتيب الأولويات الذكي (Smart Priority Sorting):
-
-**المنطق:**
-- احسب الأيام المتبقية للموعد النهائي
-- لو متأخر → `urgent`
-- لو أقل من يوم → `urgent`
-- لو أقل من 3 أيام → `high`
-- لو أقل من أسبوع → `medium`
-- لو أكثر من أسبوع → `low`
-- ضع في الاعتبار صعوبة المادة المرتبطة
-- ضع في الاعتبار عدد المهام المعلقة لكل مادة
-
-#### 2. خوارزمية الجدولة الأسبوعية (Weekly Scheduler):
-
-**المنطق:**
-- حدد ساعات الدراسة اليومية المتاحة
-- احسب وزن كل مادة بناءً على: (صعوبة × ساعات معتمدة) ÷ أيام حتى أقرب اختبار
-- وزّن المواد على الأيام بحيث:
-  - كل يوم يحتوي مزيج من سهل ومتوسط وصعب
-  - لا يزيد عن مادتين صعبتين في نفس اليوم
-  - المادة اللي اختبارها أقرب تحصل على وقت أكثر
-  - خصص فترات راحة (15-30 دقيقة بين كل مادة)
-
-#### 3. خوارزمية وضع الأزمة (Crisis Mode):
-
-**المنطق:**
-- تفحص: هل في اختبار خلال 3 أيام؟
-- لو نعم: فعّل وضع الأزمة
-- رتّب المواد: الأقرب اختباراً أولاً
-- زوّد ساعات المواد القريبة على حساب البعيدة
-- حوّل كل المهام غير المكتملة لـ `is_crisis = true`
-- أرسل تنبيه طوارئ للطالب
-- اقترح خطة مذاكرة مكثفة (ساعات أطول، راحة أقل)
-
----
-
-### 📱 القسم الثامن: تصميم الواجهة (UI/UX Guidelines)
-
-#### الألوان المقترحة:
-
-| العنصر | اللون | الكود |
-|--------|-------|-------|
-| الرئيسي (Primary) | أزرق | `#4F46E5` |
-| الثانوي (Secondary) | بنفسجي | `#7C3AED` |
-| النجاح (Success) | أخضر | `#10B981` |
-| التحذير (Warning) | برتقالي | `#F59E0B` |
-| الخطر (Danger) | أحمر | `#EF4444` |
-| وضع الأزمة | أحمر داكن | `#DC2626` |
-| الخلفية | رمادي فاتح | `#F3F4F6` |
-| النص | رمادي داكن | `#1F2937` |
-
-#### خطوط مقترحة:
-- **العربي:** Cairo أو Tajawal (من Google Fonts)
-- **الإنجليزي:** Inter أو Poppins
-- **الأكواد:** JetBrains Mono
-
-#### مبادئ التصميم:
-- RTL كافتراضي (عربي)
-- ألوان الأولويات: منخفض (أخضر) → متوسط (أصفر) → عالي (برتقالي) → عاجل (أحمر)
-- أيقونات واضحة لكل قسم (📚 مواد، ✅ مهام، 📝 ملخصات، 📅 خطط)
-- بطاقات (Cards) لعرض البيانات بدل جداول مملة
-- شريط بحث سريع في الـ Navbar
-- زر "إضافة سريعة" (FAB button) في الموبايل
-- وضع داكن (Dark Mode) اختياري
-
----
-
-### 🔐 القسم التاسع: متغيرات البيئة (.env)
-
-**المطلوب إضافة هذه المتغيرات في ملف `.env`:**
-
-```
-# التطبيق
-APP_NAME="منصة التعلّم الذكي"
-APP_ENV=local
-APP_KEY=
-APP_DEBUG=true
-APP_URL=http://localhost:8000
-
-# قاعدة البيانات
-DB_CONNECTION=mysql
-DB_HOST=127.0.0.1
-DB_PORT=3306
-DB_DATABASE=smart_learning
-DB_USERNAME=root
-DB_PASSWORD=
-
-# الذكاء الاصطناعي
-OPENAI_API_KEY=sk-your-key-here
-AI_MODEL=gpt-4
-AI_MAX_TOKENS=2000
-AI_TEMPERATURE=0.7
-
-# رفع الملفات
-FILESYSTEM_DRIVER=public
-MAX_UPLOAD_SIZE=20480
-
-# إعدادات التلخيص
-SUMMARY_BRIEF_MAX_TOKENS=300
-SUMMARY_MEDIUM_MAX_TOKENS=800
-SUMMARY_DETAILED_MAX_TOKENS=1500
-
-# وضع الأزمة
-CRISIS_DAYS_THRESHOLD=3
-
-# التنبيهات
-NOTIFICATION_ENABLED=true
-EXAM_REMINDER_DAYS_BEFORE=3
-```
-
----
-
-### 📦 القسم العاشر: الحزم المطلوبة
-
-**حزم Composer (PHP):**
-
-| الحزمة | الغرض | أمر التثبيت |
-|--------|-------|------------|
-| `laravel/breeze` | نظام Auth جاهز (تسجيل/دخول) | `composer require laravel/breeze --dev` ثم `php artisan breeze:install` |
-| `smalot/pdfparser` | استخراج نص من PDF | `composer require smalot/pdfparser` |
-| `openai-php/laravel` | SDK رسمي لـ OpenAI في Laravel | `composer require openai-php/laravel` |
-| `barryvdh/laravel-debugbar` | شريط تصحيح للتطوير | `composer require barryvdh/laravel-debugbar --dev` |
-
-**حزم NPM (Frontend):**
-
-| الحزمة | الغرض | أمر التثبيت |
-|--------|-------|------------|
-| `tailwindcss` | CSS Framework | `npm install -D tailwindcss` |
-| `alpinejs` | تفاعلية بسيطة بدون React/Vue | `npm install alpinejs` |
-| `axios` | طلبات AJAX للمساعد الذكي | `npm install axios` |
-
-**أوامر التثبيت الكاملة:**
-```bash
-composer require laravel/breeze --dev
-php artisan breeze:install
-composer require smalot/pdfparser
-composer require openai-php/laravel
-composer require barryvdh/laravel-debugbar --dev
-npm install -D tailwindcss
-npm install alpinejs axios
-```
-
----
-
-### ✅ القسم الحادي عشر: Checklist التنفيذ النهائي
-
-استخدم هذه القائمة لتتبع التقدم:
-
-#### البنية التحتية:
-- [ ] إنشاء مشروع Laravel جديد
-- [ ] تثبيت الحزم المطلوبة (Composer + NPM)
-- [ ] إعداد ملف `.env`
-- [ ] إعداد قاعدة البيانات واختبار الاتصال
-
-#### قاعدة البيانات:
-- [ ] إنشاء كل الـ Migrations (9 جداول)
-- [ ] تشغيل `php artisan migrate`
-- [ ] إنشاء كل الـ Models مع العلاقات
-
-#### الخدمات:
-- [ ] كتابة `AIService.php`
-- [ ] كتابة `SummaryService.php`
-- [ ] كتابة `ScheduleGenerator.php`
-
-#### Controllers:
-- [ ] كتابة `AuthController`
-- [ ] كتابة `DashboardController`
-- [ ] كتابة `SummaryController`
-- [ ] كتابة `AssistantController`
-- [ ] escritura `TaskController`
-- [ ] كتابة `ScheduleController`
-- [ ] كتابة `SubjectController`
-- [ ] كتابة `ExamController`
-- [ ] كتابة `NotificationController`
-
-#### الـ Routes:
-- [ ] تعريف كل المسارات في `routes/web.php`
-
-#### الواجهات (Views):
-- [ ] القالب الرئيسي `layouts/app.blade.php`
-- [ ] القائمة الجانبية + الشريط العلوي
-- [ ] صفحات Auth (تسجيل، دخول، ملف شخصي)
-- [ ] Dashboard
-- [ ] صفحات المواد
-- [ ] صفحات المهام
-- [ ] صفحات الملخصات
-- [ ] صفحات المساعد الذكي
-- [ ] صفحات خطط الدراسة
-- [ ] صفحات الاختبارات
-- [ ] صفحات التنبيهات
-- [ ] بانر وضع الأزمة
-
-#### الاختبار:
-- [ ] اختبار كل ميزة يدوياً (14 اختبار)
-- [ ] اختبار الأداء
-- [ ] اختبار الأمان
-
-#### التسليم:
-- [ ] رفع الكود على GitHub
-- [ ] كتابة التقرير النهائي
-- [ ] تجهيز العرض التقديمي
+MIT License
