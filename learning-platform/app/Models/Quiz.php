@@ -4,8 +4,10 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class quizzes extends Model
+class Quiz extends Model
 {
+    protected $table = 'quizzes';
+
     protected $fillable = [
         'lecture_id',
         'title',
@@ -22,24 +24,20 @@ class quizzes extends Model
         'end_time'        => 'datetime',
     ];
 
-    // ── Relations ──────────────────────────────
-
     public function lecture(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
-        return $this->belongsTo(lectures::class);
+        return $this->belongsTo(Lecture::class);
     }
 
     public function questions(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
-        return $this->hasMany(questions::class);
+        return $this->hasMany(Question::class);
     }
 
     public function attempts(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
-        return $this->hasMany(student_quiz_attempts::class);
+        return $this->hasMany(StudentQuizAttempt::class);
     }
-
-    // ── Helpers ────────────────────────────────
 
     public function isPublished(): bool
     {

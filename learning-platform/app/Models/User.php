@@ -17,26 +17,22 @@ class User extends Authenticatable
 
     protected $hidden = [
         'password',
-        'remember_token', // تذكرني
+        'remember_token',
     ];
 
     protected $casts = [
         'password' => 'hashed',
     ];
 
-    // ── Relations ──────────────────────────────
-
     public function teacher(): \Illuminate\Database\Eloquent\Relations\HasOne
     {
-        return $this->hasOne(teachers::class);
+        return $this->hasOne(Teacher::class);
     }
 
     public function student(): \Illuminate\Database\Eloquent\Relations\HasOne
     {
-        return $this->hasOne(students::class);
+        return $this->hasOne(Student::class);
     }
-
-    // ── Helpers ────────────────────────────────
 
     public function isTeacher(): bool
     {
@@ -48,7 +44,7 @@ class User extends Authenticatable
         return $this->role === 'student';
     }
 
-    public function getProfile(): teachers|students|null
+    public function getProfile(): Teacher|Student|null
     {
         return $this->isTeacher() ? $this->teacher : $this->student;
     }

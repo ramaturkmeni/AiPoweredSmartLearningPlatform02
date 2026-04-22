@@ -3,8 +3,8 @@
 namespace App\Http\Controllers\Student;
 
 use App\Http\Controllers\Controller;
-use App\Models\courses;
-use App\Models\course_enrollments;
+use App\Models\Course;
+use App\Models\CourseEnrollment;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -15,7 +15,7 @@ class CourseController extends Controller
     {
         $student = Auth::user()->student;
 
-        $courses = courses::with('teacher')
+        $courses = Course::with('teacher')
                          ->withCount('lectures', 'students')
                          ->when($request->search, fn($q) =>
                              $q->where('title', 'like', "%{$request->search}%")
@@ -28,13 +28,13 @@ class CourseController extends Controller
     }
 
     // ── Enroll in Course ─────────────────────────
-    public function enroll(courses $course)
+    public function enroll(Course $course)
     {
         $student = Auth::user()->student;
 
         abort_if($student->isEnrolledIn($course->id), 422, 'أنت مسجّل في هذه المادة بالفعل.');
 
-        course_enrollments ::create([
+        CourseEnrollment::create([
             'student_id' => $student->id,
             'course_id'  => $course->id,
             'status'     => 'active',
@@ -44,11 +44,11 @@ class CourseController extends Controller
     }
 
     // ── Drop Course ──────────────────────────────
-    public function drop(courses $course)
+    public function drop(Course $course)
     {
         $student = Auth::user()->student;
 
-        $enrollment = course_enrollments::where('student_id', $student->id)
+        $enrollment = CourseEnrollment::where('student_id', $student->id)
                                       ->where('course_id', $course->id)
                                       ->firstOrFail();
 
@@ -58,7 +58,7 @@ class CourseController extends Controller
     }
 
     // ── Show Course Lectures ─────────────────────
-    public function show(courses $course)
+    public function show(Course $course)
     {
         $student = Auth::user()->student;
 

@@ -4,8 +4,10 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class student_answers extends Model
+class StudentAnswer extends Model
 {
+    protected $table = 'student_answers';
+
     protected $fillable = [
         'attempt_id',
         'question_id',
@@ -17,31 +19,27 @@ class student_answers extends Model
         'is_correct' => 'boolean',
     ];
 
-    // ── Relations ──────────────────────────────
-
     public function attempt(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
-        return $this->belongsTo(student_quiz_attempts::class, 'attempt_id');
+        return $this->belongsTo(StudentQuizAttempt::class, 'attempt_id');
     }
 
     public function question(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
-        return $this->belongsTo(questions::class);
+        return $this->belongsTo(Question::class);
     }
 
     public function selectedOption(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
-        return $this->belongsTo(question_Options::class, 'selected_option_id');
+        return $this->belongsTo(QuestionOption::class, 'selected_option_id');
     }
-
-    // ── Helpers ────────────────────────────────
 
     public static function createAndCheck(
         int $attemptId,
         int $questionId,
         int $selectedOptionId
     ): self {
-        $isCorrect = question_Options::where('id', $selectedOptionId)
+        $isCorrect = QuestionOption::where('id', $selectedOptionId)
                                    ->where('is_correct', true)
                                    ->exists();
         return self::create([

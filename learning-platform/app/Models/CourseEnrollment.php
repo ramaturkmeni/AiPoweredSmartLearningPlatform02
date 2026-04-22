@@ -4,9 +4,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class course_enrollments extends Model
+class CourseEnrollment extends Model
 {
     public $timestamps = false;
+
+    protected $table = 'course_enrollments';
 
     protected $fillable = [
         'student_id',
@@ -19,19 +21,15 @@ class course_enrollments extends Model
         'enrolled_at' => 'datetime',
     ];
 
-    // ── Relations ──────────────────────────────
-
     public function student(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
-        return $this->belongsTo(students::class);
+        return $this->belongsTo(Student::class);
     }
 
     public function course(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
-        return $this->belongsTo(courses::class);
+        return $this->belongsTo(Course::class);
     }
-
-    // ── Helpers ────────────────────────────────
 
     public function isActive(): bool
     {

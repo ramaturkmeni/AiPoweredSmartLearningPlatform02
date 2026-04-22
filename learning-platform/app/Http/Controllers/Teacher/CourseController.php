@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Teacher;
 
 use App\Http\Controllers\Controller;
-use App\Models\courses;
+use App\Models\Course;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -46,7 +46,7 @@ class CourseController extends Controller
     }
 
     // ── Edit ─────────────────────────────────────
-    public function edit(courses $course)
+    public function edit(Course $course)
     {
         $this->authorizeTeacher($course);
 
@@ -54,7 +54,7 @@ class CourseController extends Controller
     }
 
     // ── Update ───────────────────────────────────
-    public function update(Request $request, courses $course)
+    public function update(Request $request, Course $course)
     {
         $this->authorizeTeacher($course);
 
@@ -70,7 +70,7 @@ class CourseController extends Controller
     }
 
     // ── Destroy ──────────────────────────────────
-    public function destroy(courses $course)
+    public function destroy(Course $course)
     {
         $this->authorizeTeacher($course);
 
@@ -81,7 +81,7 @@ class CourseController extends Controller
     }
 
     // ── Private: التحقق من ملكية الأستاذ ─────────
-    private function authorizeTeacher(courses $course): void
+    private function authorizeTeacher(Course $course): void
     {
         $teacherId = Auth::user()->teacher->id;
 

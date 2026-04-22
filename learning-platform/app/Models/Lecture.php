@@ -4,7 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class lectures extends Model
+class Lecture extends Model
 {
     protected $fillable = [
         'course_id',
@@ -16,19 +16,15 @@ class lectures extends Model
         'order_index',
     ];
 
-    // ── Relations ──────────────────────────────
-
     public function course(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
-        return $this->belongsTo(courses::class,'course_id');
+        return $this->belongsTo(Course::class, 'course_id');
     }
 
     public function quiz(): \Illuminate\Database\Eloquent\Relations\HasOne
     {
-        return $this->hasOne(quizzes::class, 'lecture_id');
+        return $this->hasOne(Quiz::class, 'lecture_id');
     }
-
-    // ── Helpers ────────────────────────────────
 
     public function hasQuiz(): bool
     {

@@ -4,8 +4,8 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
-use App\Models\teachers;
-use App\Models\students;
+use App\Models\Teacher;
+use App\Models\Student;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
@@ -13,13 +13,11 @@ use Illuminate\Validation\Rules\Password;
 
 class AuthController extends Controller
 {
-    // ── Show Register Form ──────────────────────
     public function showRegister()
     {
         return view('auth.register');
     }
 
-    // ── Register ────────────────────────────────
     public function register(Request $request)
     {
         $request->validate([
@@ -35,14 +33,12 @@ class AuthController extends Controller
             'major'      => ['nullable', 'required_if:role,student', 'string', 'max:100'],
         ]);
 
-        // 1. إنشاء سجل في Users
         $user = User::create([
             'username' => $request->username,
             'password' => Hash::make($request->password),
             'role'     => $request->role,
         ]);
 
-        // 2. إنشاء الملف الشخصي حسب الدور
         $profileData = [
             'user_id'    => $user->id,
             'first_name' => $request->first_name,
@@ -54,26 +50,23 @@ class AuthController extends Controller
         ];
 
         if ($request->role === 'teacher') {
-            teachers::create($profileData);
+            Teacher::create($profileData);
         } else {
-            students::create(array_merge($profileData, [
+            Student::create(array_merge($profileData, [
                 'major' => $request->major,
             ]));
         }
 
-        // 3. تسجيل الدخول تلقائياً
         Auth::login($user);
 
         return redirect()->route($request->role . '.dashboard');
     }
 
-    // ── Show Login Form ─────────────────────────
     public function showLogin()
     {
         return view('auth.login');
     }
 
-    // ── Login ────────────────────────────────────
     public function login(Request $request)
     {
         $request->validate([
@@ -97,7 +90,6 @@ class AuthController extends Controller
         return redirect()->intended(route($role . '.dashboard'));
     }
 
-    // ── Logout ───────────────────────────────────
     public function logout(Request $request)
     {
         Auth::logout();
@@ -105,5 +97,44 @@ class AuthController extends Controller
         $request->session()->regenerateToken();
 
         return redirect()->route('login');
+    }
+
+    public function profile()
+    {
+        $user    = Auth::user();
+        $profile = $user->getProfile();
+
+        return view('profile.show', compact('user', 'profile'));
+    }
+
+    public function updateProfile(Request $request)
+    {
+        $user    = Auth::user();
+        $profile = $user->getProfile();
+
+        $rules = [
+            'first_name' => ['required', 'string', 'max:50'],
+            'last_name'  => ['required', 'string', 'max:50'],
+            'email'      => ['required', 'email', 'unique:' . ($user->isTeacher() ? 'teachers' : 'students') . ',email,' . $profile->id],
+            'gender'     => ['required', 'in:male,female'],
+            'phone'      => ['nullable', 'string', 'max:20'],
+            'location'   => ['nullable', 'string', 'max:100'],
+        ];
+
+        if ($user->isStudent()) {
+            $rules['major'] = ['nullable', 'string', 'max:100'];
+        }
+
+        $request->validate($rules);
+
+        $data = $request->only('first_name', 'last_name', 'email', 'gender', 'phone', 'location');
+
+        if ($user->isStudent()) {
+            $data['major'] = $request->major;
+        }
+
+        $profile->update($data);
+
+        return back()->with('success', 'تم تحديث الملف الشخصي بنجاح ✓');
     }
 }

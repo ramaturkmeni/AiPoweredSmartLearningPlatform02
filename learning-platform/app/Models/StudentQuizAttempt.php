@@ -4,9 +4,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class student_quiz_attempts extends Model
+class StudentQuizAttempt extends Model
 {
     public $timestamps = false;
+
+    protected $table = 'student_quiz_attempts';
 
     protected $fillable = [
         'student_id',
@@ -21,24 +23,20 @@ class student_quiz_attempts extends Model
         'taken_at' => 'datetime',
     ];
 
-    // ── Relations ──────────────────────────────
-
     public function student(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
-        return $this->belongsTo(students::class);
+        return $this->belongsTo(Student::class);
     }
 
     public function quiz(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
-        return $this->belongsTo(quizzes::class);
+        return $this->belongsTo(Quiz::class);
     }
 
     public function answers(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
-        return $this->hasMany(student_answers::class, 'attempt_id');
+        return $this->hasMany(StudentAnswer::class, 'attempt_id');
     }
-
-    // ── Helpers ────────────────────────────────
 
     public function isSubmitted(): bool
     {

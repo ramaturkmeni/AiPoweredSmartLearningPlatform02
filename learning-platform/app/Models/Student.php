@@ -4,8 +4,10 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class students extends Model
+class Student extends Model
 {
+    protected $table = 'students';
+
     protected $fillable = [
         'user_id',
         'first_name',
@@ -17,8 +19,6 @@ class students extends Model
         'major',
     ];
 
-    // ── Relations ──────────────────────────────
-
     public function user(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
         return $this->belongsTo(User::class);
@@ -26,22 +26,20 @@ class students extends Model
 
     public function enrollments(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
-        return $this->hasMany(course_enrollments::class);
+        return $this->hasMany(CourseEnrollment::class);
     }
 
     public function courses(): \Illuminate\Database\Eloquent\Relations\BelongsToMany
     {
-        return $this->belongsToMany(courses::class, 'course_enrollments')
+        return $this->belongsToMany(Course::class, 'course_enrollments')
                     ->withPivot('status', 'enrolled_at')
                     ->wherePivot('status', 'active');
     }
 
     public function quizAttempts(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
-        return $this->hasMany(student_quiz_attempts::class);
+        return $this->hasMany(StudentQuizAttempt::class);
     }
-
-    // ── Helpers ────────────────────────────────
 
     public function getFullNameAttribute(): string
     {
@@ -56,4 +54,3 @@ class students extends Model
                     ->exists();
     }
 }
-

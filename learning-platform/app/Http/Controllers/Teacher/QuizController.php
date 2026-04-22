@@ -3,10 +3,10 @@
 namespace App\Http\Controllers\Teacher;
 
 use App\Http\Controllers\Controller;
-use App\Models\lectures;
-use App\Models\quizzes;
-use App\Models\questions;
-use App\Models\question_Options;
+use App\Models\Lecture;
+use App\Models\Quiz;
+use App\Models\Question;
+use App\Models\QuestionOption;
 use App\Services\AIService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -17,7 +17,7 @@ class QuizController extends Controller
     public function __construct(protected AIService $ai) {}
 
     // ── Generate Quiz via AI ─────────────────────
-    public function generate(lectures $lecture)
+    public function generate(Lecture $lecture)
     {
         $this->authorizeTeacher($lecture);
 
@@ -29,7 +29,7 @@ class QuizController extends Controller
 
         DB::transaction(function () use ($lecture, $generated) {
             // إنشاء الاختبار
-            $quiz = quizzes::create([
+            $quiz = Quiz::create([
                 'lecture_id'     => $lecture->id,
                 'title'          => 'اختبار: ' . $lecture->title,
                 'is_ai_generated' => true,
@@ -38,13 +38,13 @@ class QuizController extends Controller
 
             // حفظ الأسئلة والخيارات
             foreach ($generated['questions'] as $q) {
-                $question = questions::create([
+                $question = Question::create([
                     'quiz_id'       => $quiz->id,
                     'question_text' => $q['question'],
                 ]);
 
                 foreach ($q['options'] as $opt) {
-                    question_Options::create([
+                    QuestionOption::create([
                         'question_id' => $question->id,
                         'option_text' => $opt['text'],
                         'is_correct'  => $opt['is_correct'],
@@ -58,7 +58,7 @@ class QuizController extends Controller
     }
 
     // ── Review Quiz (Draft) ──────────────────────
-    public function review(quizzes $quiz)
+    public function review(Quiz $quiz)
     {
         $this->authorizeQuiz($quiz);
 
@@ -68,7 +68,7 @@ class QuizController extends Controller
     }
 
     // ── Update Quiz Settings ─────────────────────
-    public function update(Request $request, quizzes $quiz)
+    public function update(Request $request, Quiz $quiz)
     {
         $this->authorizeQuiz($quiz);
 
@@ -85,7 +85,7 @@ class QuizController extends Controller
     }
 
     // ── Publish Quiz ─────────────────────────────
-    public function publish(quizzes$quiz)
+    public function publish(Quiz $quiz)
     {
         $this->authorizeQuiz($quiz);
 
@@ -97,7 +97,7 @@ class QuizController extends Controller
     }
 
     // ── Destroy Quiz ─────────────────────────────
-    public function destroy(quizzes $quiz)
+    public function destroy(Quiz $quiz)
     {
         $this->authorizeQuiz($quiz);
 
@@ -108,7 +108,7 @@ class QuizController extends Controller
     }
 
     // ── Add Question ─────────────────────────────
-    public function addQuestion(Request $request, quizzes $quiz)
+    public function addQuestion(Request $request, Quiz $quiz)
     {
         $this->authorizeQuiz($quiz);
 
@@ -120,12 +120,12 @@ class QuizController extends Controller
         ]);
 
         DB::transaction(function () use ($request, $quiz) {
-            $question = questions::create([
+            $question = Question::create([
                 'quiz_id'       => $quiz->id,
                 'question_text' => $request->question_text,]);
 
             foreach ($request->options as $opt) {
-                question_Options::create([
+                QuestionOption::create([
                     'question_id' => $question->id,
                     'option_text' => $opt['text'],
                     'is_correct'  => $opt['is_correct'],
@@ -137,7 +137,7 @@ class QuizController extends Controller
     }
 
     // ── Delete Question ──────────────────────────
-    public function deleteQuestion(questions $question)
+    public function deleteQuestion(Question $question)
     {
         $this->authorizeQuiz($question->quiz);
 
@@ -147,7 +147,7 @@ class QuizController extends Controller
     }
 
     // ── View Results ─────────────────────────────
-    public function results(quizzes$quiz)
+    public function results(Quiz $quiz)
     {
         $this->authorizeQuiz($quiz);
 
@@ -167,7 +167,7 @@ class QuizController extends Controller
     }
 
     // ── Private ──────────────────────────────────
-    private function authorizeTeacher(lectures $lecture): void
+    private function authorizeTeacher(Lecture $lecture): void
     {
         abort_if(
             $lecture->course->teacher_id !== Auth::user()->teacher->id,
@@ -175,7 +175,7 @@ class QuizController extends Controller
         );
     }
 
-    private function authorizeQuiz(quizzes $quiz): void
+    private function authorizeQuiz(Quiz $quiz): void
     {
         $this->authorizeTeacher($quiz->lecture);
     }

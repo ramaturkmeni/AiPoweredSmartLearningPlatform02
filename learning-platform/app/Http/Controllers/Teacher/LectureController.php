@@ -3,8 +3,8 @@
 namespace App\Http\Controllers\Teacher;
 
 use App\Http\Controllers\Controller;
-use App\Models\courses;
-use App\Models\lectures;
+use App\Models\Course;
+use App\Models\Lecture;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\Storage;
 class LectureController extends Controller
 {
     // ── Index ────────────────────────────────────
-    public function index(courses $course)
+    public function index(Course $course)
     {
         $this->authorizeTeacher($course);
 
@@ -60,7 +60,7 @@ class LectureController extends Controller
             $data['img_url'] = $request->file('image')->store('lectures/images', 'public');
         }
 
-        $lecture = lectures::create($data);
+        $lecture = Lecture::create($data);
 
         // إذا طلب الأستاذ توليد اختبار مباشرة
         if ($request->boolean('generate_quiz')) {
@@ -72,7 +72,7 @@ class LectureController extends Controller
     }
 
     // ── Edit ─────────────────────────────────────
-    public function edit(lectures $lecture)
+    public function edit(Lecture $lecture)
     {
         $this->authorizeTeacher($lecture->course);
         $courses = Auth::user()->teacher->courses()->get();
@@ -81,7 +81,7 @@ class LectureController extends Controller
     }
 
     // ── Update ───────────────────────────────────
-    public function update(Request $request, lectures $lecture)
+    public function update(Request $request, Lecture $lecture)
     {
         $this->authorizeTeacher($lecture->course);
 
@@ -110,7 +110,7 @@ class LectureController extends Controller
     }
 
     // ── Destroy ──────────────────────────────────
-    public function destroy(lectures $lecture)
+    public function destroy(Lecture $lecture)
     {
         $this->authorizeTeacher($lecture->course);
 
@@ -122,7 +122,7 @@ class LectureController extends Controller
     }
 
     // ── Private ──────────────────────────────────
-    private function authorizeTeacher(courses $course): void
+    private function authorizeTeacher(Course $course): void
     {
         abort_if(
             $course->teacher_id !== Auth::user()->teacher->id,

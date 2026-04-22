@@ -4,8 +4,10 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class question_Options extends Model
+class QuestionOption extends Model
 {
+    protected $table = 'question_options';
+
     protected $fillable = [
         'question_id',
         'option_text',
@@ -16,10 +18,8 @@ class question_Options extends Model
         'is_correct' => 'boolean',
     ];
 
-    // ── Relations ──────────────────────────────
-
     public function question(): \Illuminate\Database\Eloquent\Relations\BelongsTo
     {
-        return $this->belongsTo(questions::class);
+        return $this->belongsTo(Question::class);
     }
 }

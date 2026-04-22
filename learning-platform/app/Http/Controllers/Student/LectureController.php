@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Student;
 
 use App\Http\Controllers\Controller;
-use App\Models\lectures;
+use App\Models\Lecture;
 use App\Services\AIService;
 use Illuminate\Support\Facades\Auth;
 
@@ -11,8 +11,7 @@ class LectureController extends Controller
 {
     public function __construct(protected AIService $ai) {}
 
-    // ── View Lecture ─────────────────────────────
-    public function show(lectures $lecture)
+    public function show(Lecture $lecture)
     {
         $student = Auth::user()->student;
 
@@ -22,13 +21,12 @@ class LectureController extends Controller
         );
 
         $courseLectures = $lecture->course->lectures;
-        $quiz           = $lecture->quiz?->where('status', 'published')->first();
+        $quiz           = $lecture->quiz?->isPublished() ? $lecture->quiz : null;
 
         return view('student.lectures.show', compact('lecture', 'courseLectures', 'quiz'));
     }
 
-    // ── AI Summarize ─────────────────────────────
-    public function summarize(lectures $lecture)
+    public function summarize(Lecture $lecture)
     {
         $student = Auth::user()->student;
 

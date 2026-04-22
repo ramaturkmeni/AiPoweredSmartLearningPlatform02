@@ -45,9 +45,15 @@ class AIService
     }
 
     // ── Summarize ────────────────────────────────
-    public function summarize(string $lectureText): string
+    public function summarize(string $lectureText, string $level = 'medium'): string
     {
-        $prompt = "لخّص النص التالي باللغة العربية بشكل مختصر ومنظم، مع إبراز أهم النقاط والمفاهيم الرئيسية:
+        $instructions = match($level) {
+            'brief'    => 'لخص في 3-5 نقاط فقط',
+            'detailed' => 'لخص بالتفصيل مع أمثلة',
+            default    => 'لخص بشكل متوازن مع إبراز النقاط الرئيسية',
+        };
+
+        $prompt = "لخّص النص التالي باللغة العربية {$instructions}:
 
 {$lectureText}";
 
