@@ -37,8 +37,8 @@ class DatabaseSeeder extends Seeder
             'last_name'  => 'خالد',
             'email'      => 'doctor@smartlearn.com',
             'gender'     => 'male',
-            'phone'      => '0501234567',
-            'location'   => 'الرياض',
+            'phone'      => '0901234567',
+            'location'   => 'حمص',
         ]);
 
         $adminStudent = User::create([
@@ -49,13 +49,13 @@ class DatabaseSeeder extends Seeder
 
         Student::create([
             'user_id'    => $adminStudent->id,
-            'first_name' => 'علي',
-            'last_name'  => 'محمد',
+            'first_name' => 'راما',
+            'last_name'  => 'سعد',
             'email'      => 'student@smartlearn.com',
-            'gender'     => 'male',
-            'phone'      => '0509876543',
-            'location'   => 'جدة',
-            'major'      => 'علوم الحاسب',
+            'gender'     => 'female',
+            'phone'      => '0909876543',
+            'location'   => 'حماة',
+            'major'      => 'هندسة الحاسب',
         ]);
 
         // ==========================================

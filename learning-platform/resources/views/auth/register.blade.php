@@ -188,7 +188,7 @@
                         <label class="text-xs font-bold text-on-surface-variant mr-1">رقم الهاتف</label>
                         <div class="relative group">
                             <span class="absolute inset-y-0 right-4 flex items-center text-outline"><span class="material-symbols-outlined">call</span></span>
-                            <input name="phone" value="{{ old('phone') }}" class="w-full bg-surface-container-lowest border-none focus:ring-0 rounded-2xl py-3 pr-12 pl-4 text-on-surface text-right transition-all border-b-2 border-transparent focus:border-primary" dir="ltr" placeholder="05XXXXXXXX" type="tel" required/>
+                            <input name="phone" value="{{ old('phone') }}" class="w-full bg-surface-container-lowest border-none focus:ring-0 rounded-2xl py-3 pr-12 pl-4 text-on-surface text-right transition-all border-b-2 border-transparent focus:border-primary" dir="ltr" placeholder="09XXXXXXXX" type="tel" required/>
                         </div>
                         @error('phone') <p class="text-error text-xs">{{ $message }}</p> @enderror
                     </div>
@@ -198,7 +198,7 @@
                         <label class="text-xs font-bold text-on-surface-variant mr-1">المدينة (مكان الإقامة)</label>
                         <div class="relative group">
                             <span class="absolute inset-y-0 right-4 flex items-center text-outline"><span class="material-symbols-outlined">location_on</span></span>
-                            <input name="location" value="{{ old('location') }}" class="w-full bg-surface-container-lowest border-none focus:ring-0 rounded-2xl py-3 pr-12 pl-4 text-on-surface transition-all border-b-2 border-transparent focus:border-primary" placeholder="مثال: الرياض" type="text" required/>
+                            <input name="location" value="{{ old('location') }}" class="w-full bg-surface-container-lowest border-none focus:ring-0 rounded-2xl py-3 pr-12 pl-4 text-on-surface transition-all border-b-2 border-transparent focus:border-primary" placeholder="مثال: حماة" type="text" required/>
                         </div>
                         @error('location') <p class="text-error text-xs">{{ $message }}</p> @enderror
                     </div>
@@ -223,13 +223,13 @@
                         <label class="text-xs font-bold text-on-surface-variant mr-1">التخصص الدراسي</label>
                         <div class="relative group">
                             <span class="absolute inset-y-0 right-4 flex items-center text-outline"><span class="material-symbols-outlined">school</span></span>
-                            <input name="major" id="major_input" value="{{ old('major') }}" class="w-full bg-surface-container-lowest border-none focus:ring-0 rounded-2xl py-3 pr-12 pl-4 text-on-surface transition-all border-b-2 border-transparent focus:border-primary" placeholder="مثال: هندسة برمجيات" type="text"/>
+                            <input name="major" id="major_input" value="{{ old('major') }}" class="w-full bg-surface-container-lowest border-none focus:ring-0 rounded-2xl py-3 pr-12 pl-4 text-on-surface transition-all border-b-2 border-transparent focus:border-primary" placeholder="مثال: هندسة الحاسب" type="text"/>
                         </div>
                         @error('major') <p class="text-error text-xs">{{ $message }}</p> @enderror
                     </div>
 
                     <!-- Password -->
-                    <div class="md:col-span-2 space-y-1.5 prism-glow">
+                    {{-- <div class="md:col-span-2 space-y-1.5 prism-glow">
                         <label class="text-xs font-bold text-on-surface-variant mr-1">كلمة المرور</label>
                         <div class="relative group">
                             <span class="absolute inset-y-0 right-4 flex items-center text-outline"><span class="material-symbols-outlined">lock</span></span>
@@ -239,6 +239,25 @@
                             </span>
                         </div>
                         @error('password') <p class="text-error text-xs">{{ $message }}</p> @enderror
+                    </div> --}}
+                    <!-- Password -->
+                    <div class="space-y-1.5 prism-glow">
+                        <label class="text-xs font-bold text-on-surface-variant mr-1">كلمة المرور</label>
+                        <div class="relative group">
+                            <span class="absolute inset-y-0 right-4 flex items-center text-outline"><span class="material-symbols-outlined">lock</span></span>
+                            <input name="password" id="password" class="w-full bg-surface-container-lowest border-none focus:ring-0 rounded-2xl py-3 pr-12 pl-12 text-on-surface text-right transition-all border-b-2 border-transparent focus:border-primary" dir="ltr" placeholder="••••••••" type="password" required/>
+                        </div>
+                        @error('password') <p class="text-error text-xs">{{ $message }}</p> @enderror
+                    </div>
+
+                    <!-- Confirm Password -->
+                    <div class="space-y-1.5 prism-glow">
+                        <label class="text-xs font-bold text-on-surface-variant mr-1">تأكيد كلمة المرور</label>
+                        <div class="relative group">
+                            <span class="absolute inset-y-0 right-4 flex items-center text-outline"><span class="material-symbols-outlined">lock</span></span>
+                            <!-- لاحظ أن الـ name هنا يجب أن يكون password_confirmation -->
+                            <input name="password_confirmation" id="password_confirmation" class="w-full bg-surface-container-lowest border-none focus:ring-0 rounded-2xl py-3 pr-12 pl-12 text-on-surface text-right transition-all border-b-2 border-transparent focus:border-primary" dir="ltr" placeholder="••••••••" type="password" required/>
+                        </div>
                     </div>
                 </div>
 
