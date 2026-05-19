@@ -55,7 +55,10 @@
                     </div>
                     <div class="text-right">
                         <p class="text-sm font-bold text-white">{{ $attempt->student->user->first_name ?? '' }} {{ $attempt->student->user->last_name ?? '' }}</p>
-                        <p class="text-xs text-on-surface-variant">{{ $attempt->created_at->format('Y/m/d H:i') }}</p>
+                        {{-- <p class="text-xs text-on-surface-variant">{{ $attempt->created_at->format('Y/m/d H:i') }}</p> --}}
+                        <p class="text-xs text-on-surface-variant">
+    {{ $attempt->taken_at ? $attempt->taken_at->format('Y/m/d H:i') : 'تاريخ غير معروف' }}
+</p>
                     </div>
                 </div>
                 <div class="flex items-center gap-4 flex-row-reverse">

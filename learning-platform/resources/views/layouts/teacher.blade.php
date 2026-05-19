@@ -146,10 +146,17 @@
                 </a>
 
 
-                <a class="flex flex-row-reverse items-center gap-4 {{ request()->routeIs('teacher.quizzes.*') ? 'bg-indigo-500/10 text-indigo-200 border-r-4 border-indigo-400 ml-2 rounded-l-xl' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50' }} px-4 py-3 transition-all" href="#">
+                {{-- <a class="flex flex-row-reverse items-center gap-4 {{ request()->routeIs('teacher.quizzes.*') ? 'bg-indigo-500/10 text-indigo-200 border-r-4 border-indigo-400 ml-2 rounded-l-xl' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50' }} px-4 py-3 transition-all" href="#">
                     <span class="material-symbols-outlined" style="{{ request()->routeIs('teacher.quizzes.*') ? 'font-variation-settings: \'FILL\' 1;' : '' }}">quiz</span>
                     <span class="font-medium text-sm">الاختبارات</span>
-                </a>
+                </a> --}}
+<!-- ابحث عن رابط الاختبارات وضع هذا المسار -->
+<a class="flex flex-row-reverse items-center gap-4 {{ request()->routeIs('teacher.quizzes.index') ? 'bg-indigo-500/10 text-indigo-200 border-r-4 border-indigo-400 ml-2 rounded-l-xl' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50' }} px-4 py-3 transition-all"
+   href="{{ route('teacher.quizzes.index') }}">
+    <span class="material-symbols-outlined" style="{{ request()->routeIs('teacher.quizzes.index') ? 'font-variation-settings: \'FILL\' 1;' : '' }}">quiz</span>
+    <span class="font-medium text-sm">الاختبارات والنتائج</span>
+</a>
+
             </nav>
         </div>
 

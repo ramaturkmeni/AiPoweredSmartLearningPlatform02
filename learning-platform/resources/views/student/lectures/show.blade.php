@@ -65,7 +65,8 @@
                 <div class="space-y-2">
                     @foreach($courseLectures as $lec)
                         <a href="{{ route('student.lectures.show', $lec->id) }}" class="flex flex-row-reverse items-center gap-3 p-3 rounded-xl {{ $lec->id === $lecture->id ? 'bg-primary/10 text-primary border border-primary/20' : 'bg-surface-container text-on-surface-variant hover:bg-surface-container-high' }} transition-all">
-                            <span class="material-symbols-outlined text-lg {{ $lec->id === $lecture->id ? 'text-primary' }}">play_circle</span>
+                            {{-- <span class="material-symbols-outlined text-lg {{ $lec->id === $lecture->id ? 'text-primary' }}">play_circle</span> --}}
+                            <span class="material-symbols-outlined text-lg {{ $lec->id === $lecture->id ? 'text-primary' : '' }}">play_circle</span>
                             <span class="text-sm font-medium truncate">{{ $lec->title }}</span>
                             @if($lec->quiz && $lec->quiz->isPublished())
                                 <span class="material-symbols-outlined text-tertiary text-sm mr-auto">quiz</span>

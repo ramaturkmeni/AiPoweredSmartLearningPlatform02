@@ -43,14 +43,26 @@ class StudentQuizAttempt extends Model
         return $this->status === 'submitted';
     }
 
-    public function submit(): void
-    {
-        $total   = $this->answers()->count();
-        $correct = $this->answers()->where('is_correct', true)->count();
+    // public function submit(): void
+    // {
+    //     $total   = $this->answers()->count();
+    //     $correct = $this->answers()->where('is_correct', true)->count();
 
-        $this->update([
-            'status' => 'submitted',
-            'score'  => $total > 0 ? round(($correct / $total) * 100, 2) : 0,
-        ]);
-    }
+    //     $this->update([
+    //         'status' => 'submitted',
+    //         'score'  => $total > 0 ? round(($correct / $total) * 100, 2) : 0,
+    //     ]);
+    // }
+    public function submit(): void
+{
+    $total   = $this->answers()->count();
+    $correct = $this->answers()->where('is_correct', true)->count();
+
+    $this->update([
+        'status'   => 'submitted',
+        'score'    => $total > 0 ? round(($correct / $total) * 100, 2) : 0,
+        'taken_at' => now(), // أضف هذا السطر لتسجيل وقت التسليم الآن
+    ]);
+}
+
 }

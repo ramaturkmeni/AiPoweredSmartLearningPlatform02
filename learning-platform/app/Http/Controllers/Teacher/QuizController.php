@@ -14,6 +14,32 @@ use Illuminate\Support\Facades\DB;
 
 class QuizController extends Controller
 {
+    // جلب جميع الاختبارات الخاصة بالأستاذ لرؤية نتائجها
+public function index()
+{
+    $teacher = Auth::user()->teacher;
+
+    // جلب الاختبارات المرتبطة بمواد هذا الأستاذ
+    $quizzes = \App\Models\Quiz::whereHas('lecture.course', function($q) use ($teacher) {
+        $q->where('teacher_id', $teacher->id);
+    })->with('lecture.course')
+      ->withCount('attempts')
+      ->latest()
+      ->paginate(10);
+
+    return view('teacher.quizzes.index', compact('quizzes'));
+}
+
+
+
+
+
+
+
+
+
+
+
     public function __construct(protected AIService $ai) {}
 
     // ── Generate Quiz via AI ─────────────────────
@@ -148,23 +174,24 @@ class QuizController extends Controller
 
     // ── View Results ─────────────────────────────
     public function results(Quiz $quiz)
-    {
-        $this->authorizeQuiz($quiz);
+{
+    $this->authorizeQuiz($quiz);
 
-        $attempts = $quiz->attempts()
-                         ->with('student')
-                         ->where('status', 'submitted')
-                         ->orderByDesc('score')
-                         ->paginate(20);
+    $attempts = $quiz->attempts()
+                     ->with('student.user') // تأكدنا من جلب بيانات المستخدم لعرض الاسم
+                     ->where('status', 'submitted')
+                     ->orderByDesc('score')
+                     ->paginate(20);
 
-        $stats = [
-            'total'    => $quiz->attempts()->count(),
-            'submitted'=> $quiz->attempts()->where('status', 'submitted')->count(),
-            'average'  => $quiz->average_score,
-        ];
+    $stats = [
+        'total'         => $quiz->attempts()->count(),
+        'submitted'     => $quiz->attempts()->where('status', 'submitted')->count(),
+        // قمنا بحساب المتوسط مباشرة والتأكد من تسميته average_score
+        'average_score' => round($quiz->attempts()->where('status', 'submitted')->avg('score') ?? 0, 1),
+    ];
 
-        return view('teacher.quizzes.results', compact('quiz', 'attempts', 'stats'));
-    }
+    return view('teacher.quizzes.results', compact('quiz', 'attempts', 'stats'));
+}
 
     // ── Private ──────────────────────────────────
     private function authorizeTeacher(Lecture $lecture): void

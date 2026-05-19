@@ -55,6 +55,9 @@ Route::middleware('auth')->group(function () {
         Route::get('/quizzes/{quiz}/results', [TeacherQuizController::class, 'results'])->name('quizzes.results');
         Route::get('/ai-session',[\App\Http\Controllers\Teacher\AISessionController::class, 'index'])->name('ai.index');
 
+
+        Route::get('/quizzes', [TeacherQuizController::class, 'index'])->name('quizzes.index');
+
         });
 
     Route::prefix('student')->name('student.')->middleware('role:student')->group(function () {
