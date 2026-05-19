@@ -53,7 +53,9 @@ Route::middleware('auth')->group(function () {
         Route::post('/quizzes/{quiz}/questions', [TeacherQuizController::class, 'addQuestion'])->name('quizzes.addQuestion');
         Route::delete('/questions/{question}', [TeacherQuizController::class, 'deleteQuestion'])->name('quizzes.deleteQuestion');
         Route::get('/quizzes/{quiz}/results', [TeacherQuizController::class, 'results'])->name('quizzes.results');
-    });
+        Route::get('/ai-session',[\App\Http\Controllers\Teacher\AISessionController::class, 'index'])->name('ai.index');
+
+        });
 
     Route::prefix('student')->name('student.')->middleware('role:student')->group(function () {
         Route::get('/dashboard', [\App\Http\Controllers\Student\DashboardController::class, 'index'])->name('dashboard');
@@ -67,5 +69,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/quizzes/{attempt}/submit', [StudentQuizController::class, 'submit'])->name('quizzes.submit');
         Route::get('/quizzes/{attempt}/result', [StudentQuizController::class, 'result'])->name('quizzes.result');
         Route::get('/quizzes/attempts', [StudentQuizController::class, 'myAttempts'])->name('quizzes.attempts');
+        Route::get('/ai-session',[\App\Http\Controllers\Student\AISessionController::class, 'index'])->name('ai.index');
+
     });
 });

@@ -133,10 +133,19 @@
                     <span class="material-symbols-outlined" style="{{ request()->routeIs('teacher.courses.*') ? 'font-variation-settings: \'FILL\' 1;' : '' }}">book_5</span>
                     <span class="font-medium text-sm">المواد الدراسية</span>
                 </a>
-                <a class="flex flex-row-reverse items-center gap-4 {{ request()->routeIs('teacher.lectures.*') ? 'bg-indigo-500/10 text-indigo-200 border-r-4 border-indigo-400 ml-2 rounded-l-xl' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50' }} px-4 py-3 transition-all" href="{{ route('teacher.courses.index') }}">
+
+                {{-- <a class="flex flex-row-reverse items-center gap-4 {{ request()->routeIs('teacher.lectures.*') ? 'bg-indigo-500/10 text-indigo-200 border-r-4 border-indigo-400 ml-2 rounded-l-xl' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50' }} px-4 py-3 transition-all" href="{{ route('teacher.courses.index') }}">
                     <span class="material-symbols-outlined" style="{{ request()->routeIs('teacher.lectures.*') ? 'font-variation-settings: \'FILL\' 1;' : '' }}">video_library</span>
                     <span class="font-medium text-sm">المحاضرات</span>
+                </a> --}}
+                <!-- زر المحاضرات يوجه لصفحة الإضافة -->
+
+                <a class="flex flex-row-reverse items-center gap-4 text-slate-400 px-4 py-3 hover:text-slate-200 hover:bg-slate-800/50 transition-colors" href="{{ route('teacher.lectures.create') }}">
+                    <span class="material-symbols-outlined">video_library</span>
+                    <span class="font-medium text-sm">إضافة محاضرة</span>
                 </a>
+
+
                 <a class="flex flex-row-reverse items-center gap-4 {{ request()->routeIs('teacher.quizzes.*') ? 'bg-indigo-500/10 text-indigo-200 border-r-4 border-indigo-400 ml-2 rounded-l-xl' : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/50' }} px-4 py-3 transition-all" href="#">
                     <span class="material-symbols-outlined" style="{{ request()->routeIs('teacher.quizzes.*') ? 'font-variation-settings: \'FILL\' 1;' : '' }}">quiz</span>
                     <span class="font-medium text-sm">الاختبارات</span>
@@ -145,10 +154,10 @@
         </div>
 
         <div class="mt-auto px-6 py-6 border-t border-slate-800/30">
-            <button class="w-full bg-gradient-to-br from-primary to-primary-container text-on-primary-container font-bold py-3 rounded-xl flex items-center justify-center gap-2 mb-4 hover:opacity-90 transition-all scale-95 active:scale-90">
-                <span class="material-symbols-outlined text-sm">smart_toy</span>
-                <span class="text-xs">بدء جلسة ذكاء اصطناعي</span>
-            </button>
+            <a href="{{ route('teacher.ai.index') }}" class="w-full bg-gradient-to-br from-primary to-primary-container text-on-primary-container font-bold py-3 rounded-xl flex items-center justify-center gap-2 mb-4 hover:opacity-90 transition-all scale-95 active:scale-90">
+    <span class="material-symbols-outlined text-sm">smart_toy</span>
+    <span class="text-xs">بدء جلسة ذكاء اصطناعي</span>
+</a>
             <div class="space-y-1">
                 <a class="flex flex-row-reverse items-center gap-4 text-slate-400 px-4 py-2 hover:text-slate-200 transition-colors" href="{{ route('profile') }}">
                     <span class="material-symbols-outlined">settings</span>
@@ -186,5 +195,9 @@
     </main>
 
     @stack('scripts')
+            <!-- Contextual FAB for quick actions -->
+            <a href="{{ route('teacher.lectures.create') }}" class="fixed bottom-8 left-8 w-14 h-14 bg-indigo-500 text-white rounded-full shadow-2xl flex items-center justify-center hover:scale-110 active:scale-95 transition-all z-50 group">
+                <span class="material-symbols-outlined text-3xl group-hover:rotate-90 transition-transform duration-300">add</span>
+            </a>
 </body>
 </html>

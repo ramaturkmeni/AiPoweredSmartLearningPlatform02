@@ -141,10 +141,10 @@
         </div>
 
         <div class="mt-auto px-6 py-6 border-t border-slate-800/30">
-            <button class="w-full bg-gradient-to-br from-primary to-primary-container text-on-primary-container font-bold py-3 rounded-xl flex items-center justify-center gap-2 mb-4 hover:opacity-90 transition-all scale-95 active:scale-90">
-                <span class="material-symbols-outlined text-sm">smart_toy</span>
-                <span class="text-xs">بدء جلسة ذكاء اصطناعي</span>
-            </button>
+            <a href="{{ route('student.ai.index') }}" class="w-full bg-gradient-to-br from-primary to-primary-container text-on-primary-container font-bold py-3 rounded-xl flex items-center justify-center gap-2 mb-4 hover:opacity-90 transition-all scale-95 active:scale-90">
+    <span class="material-symbols-outlined text-sm">smart_toy</span>
+    <span class="text-xs">بدء جلسة ذكاء اصطناعي</span>
+</a>
             <div class="space-y-1">
                 <a class="flex flex-row-reverse items-center gap-4 text-slate-400 px-4 py-2 hover:text-slate-200 transition-colors" href="{{ route('profile') }}">
                     <span class="material-symbols-outlined">settings</span>
