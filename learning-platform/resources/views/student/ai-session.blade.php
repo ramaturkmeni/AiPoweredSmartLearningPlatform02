@@ -9,7 +9,7 @@
         <div class="flex items-center justify-end gap-3 mb-2">
             <span class="bg-primary-container/20 text-primary-fixed-dim px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest flex items-center gap-2 border border-primary-container/30 shadow-[0_0_15px_rgba(110,136,255,0.2)]">
                 <span class="material-symbols-outlined text-[16px] animate-pulse">psychology</span>
-                محرك DeepSeek-V4 النشط
+                محرك Gemini النشط
             </span>
         </div>
         <h1 class="text-4xl md:text-5xl font-black text-transparent bg-clip-text bg-gradient-to-l from-primary to-primary-container leading-tight">

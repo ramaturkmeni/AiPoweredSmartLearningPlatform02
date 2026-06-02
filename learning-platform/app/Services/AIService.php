@@ -13,16 +13,14 @@ class AIService
 
     public function __construct()
     {
-        // يفضل وضع المفتاح في ملف .env بالشكل التالي: HF_API_KEY=hf_pTQ...
-        $this->apiKey = env('HF_API_KEY', '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');
-        $this->model = 'deepseek-ai/DeepSeek-V4-Pro:novita'; // النموذج المحدد من قبلك
-        $this->baseUrl = 'https://router.huggingface.co/v1/chat/completions'; // إضافة /chat/completions
+        $this->apiKey = config('services.gemini.key', '');
+        $this->model = config('services.gemini.model', 'gemini-2.0-flash-lite');
+        $this->baseUrl = 'https://generativelanguage.googleapis.com/v1beta/models/';
     }
 
-    // ── Generate Quiz ────────────────────────────
-    public function generateQuiz(string $lectureText, int $count = 10): array
+    public function generateQuiz(string $lectureText, int $count = 10, ?string $pdfPath = null): array
     {
-        $prompt = "بناءً على النص التالي، أنشئ {$count} أسئلة اختيار من متعدد (MCQ) باللغة العربية.
+        $prompt = "بناءً على المحتوى التالي، أنشئ {$count} أسئلة اختيار من متعدد (MCQ) باللغة العربية.
 لكل سؤال: نص السؤال، و4 خيارات، وحدد الإجابة الصحيحة.
 أعد النتيجة بصيغة JSON فقط بالشكل التالي وبدون أي نص إضافي:
 {
@@ -37,22 +35,23 @@ class AIService
       ]
     }
   ]
-}
+}";
 
-النص:
-{$lectureText}";
+        if ($lectureText) {
+            $prompt .= "\n\nالنص:\n{$lectureText}";
+        }
 
-        $response = $this->call($prompt);
+        $response = $pdfPath
+            ? $this->callWithPdf($prompt, $pdfPath)
+            : $this->call($prompt);
 
-        // تنظيف الرد في حال قام النموذج بوضع الـ JSON داخل علامات Markdown (```json ... ```)
         $cleanJson = preg_replace('/```json\s*(.*?)\s*```/s', '$1', $response);
         $cleanJson = preg_replace('/```\s*(.*?)\s*```/s', '$1', $cleanJson);
 
-        return json_decode($cleanJson, true) ??['questions' => []];
+        return json_decode($cleanJson, true) ?? ['questions' => []];
     }
 
-    // ── Summarize ────────────────────────────────
-    public function summarize(string $lectureText, string $level = 'medium'): string
+    public function summarize(string $lectureText, string $level = 'medium', ?string $pdfPath = null): string
     {
         $instructions = match($level) {
             'brief'    => 'لخص في 3 إلى 5 نقاط رئيسية فقط وبشكل مكثف جداً.',
@@ -60,40 +59,88 @@ class AIService
             default    => 'لخص بشكل متوازن ومفهوم مع إبراز المفاهيم والنقاط الأساسية.',
         };
 
-        $prompt = "لخّص النص الأكاديمي التالي باللغة العربية. {$instructions}
+        $prompt = "أنت مساعد أكاديمي متخصص. لخّص المحتوى الأكاديمي التالي باللغة العربية. {$instructions}";
 
-النص:
-{$lectureText}";
+        if ($lectureText) {
+            $prompt .= "\n\nالنص:\n{$lectureText}";
+        }
 
-        return $this->call($prompt);
+        return $pdfPath
+            ? $this->callWithPdf($prompt, $pdfPath)
+            : $this->call($prompt);
     }
 
-    // ── Core API Call ────────────────────────────
     protected function call(string $prompt): string
     {
         try {
-            $response = Http::withHeaders([
-                'Authorization' => 'Bearer ' . $this->apiKey,
-                'Content-Type'  => 'application/json',
-            ])->timeout(120)->post($this->baseUrl,[
-                'model'      => $this->model,
-                'messages'   => [
-                    ['role' => 'user', 'content' => $prompt]
+            $url = $this->baseUrl . $this->model . ':generateContent?key=' . $this->apiKey;
+
+            $response = Http::timeout(120)->post($url, [
+                'contents' => [
+                    [
+                        'parts' => [
+                            ['text' => $prompt],
+                        ],
+                    ],
                 ],
-                'temperature' => 0.7, // يمكن تعديلها للتحكم في دقة/إبداع النموذج
+                'generationConfig' => [
+                    'temperature' => 0.7,
+                ],
             ]);
 
             if ($response->failed()) {
-                Log::error('HuggingFace API error: ' . $response->body());
+                Log::error('Gemini API error: ' . $response->body());
                 return 'عذراً، حدث خطأ أثناء الاتصال بالذكاء الاصطناعي.';
             }
 
-            // جلب محتوى الرسالة بناءً على هيكل استجابة OpenAI
-            return $response->json('choices.0.message.content', '');
+            return $response->json('candidates.0.content.parts.0.text', '');
 
         } catch (\Exception $e) {
             Log::error('AIService exception: ' . $e->getMessage());
             return 'عذراً، تعذر إتمام العملية في الوقت الحالي.';
+        }
+    }
+
+    protected function callWithPdf(string $prompt, string $pdfPath): string
+    {
+        try {
+            if (!file_exists($pdfPath)) {
+                Log::error('AIService: PDF not found at ' . $pdfPath);
+                return 'عذراً، ملف المحاضرة غير موجود.';
+            }
+
+            $pdfData = base64_encode(file_get_contents($pdfPath));
+            $url = $this->baseUrl . $this->model . ':generateContent?key=' . $this->apiKey;
+
+            $response = Http::timeout(180)->post($url, [
+                'contents' => [
+                    [
+                        'parts' => [
+                            [
+                                'inlineData' => [
+                                    'mimeType' => 'application/pdf',
+                                    'data' => $pdfData,
+                                ],
+                            ],
+                            ['text' => $prompt],
+                        ],
+                    ],
+                ],
+                'generationConfig' => [
+                    'temperature' => 0.7,
+                ],
+            ]);
+
+            if ($response->failed()) {
+                Log::error('Gemini API error (PDF): ' . $response->body());
+                return 'عذراً، حدث خطأ أثناء تحليل الملف بالذكاء الاصطناعي.';
+            }
+
+            return $response->json('candidates.0.content.parts.0.text', '');
+
+        } catch (\Exception $e) {
+            Log::error('AIService PDF exception: ' . $e->getMessage());
+            return 'عذراً، تعذر تحليل الملف في الوقت الحالي.';
         }
     }
 }

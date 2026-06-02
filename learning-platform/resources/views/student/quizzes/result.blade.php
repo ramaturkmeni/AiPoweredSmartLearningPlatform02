@@ -35,7 +35,7 @@
                     </div>
                     <div class="flex-1 text-right">
                         <p class="text-white font-bold mb-1">السؤال {{ $index + 1 }}</p>
-                        <p class="text-on-surface-variant text-sm mb-4">{{ $question->text }}</p>
+                        <p class="text-on-surface-variant text-sm mb-4">{{ $question->question_text }}</p>
 
                         <div class="space-y-2">
                             @foreach($question->options as $option)
@@ -51,7 +51,7 @@
                                             <div class="w-3 h-3 rounded-full bg-success"></div>
                                         @endif
                                     </div>
-                                    <span class="text-sm {{ $isSelected && $isCorrectOption ? 'text-success font-bold' : ($isSelected ? 'text-error font-bold' : ($isCorrectOption ? 'text-success' : 'text-on-surface-variant')) }}">{{ $option->text }}</span>
+                                    <span class="text-sm {{ $isSelected && $isCorrectOption ? 'text-success font-bold' : ($isSelected ? 'text-error font-bold' : ($isCorrectOption ? 'text-success' : 'text-on-surface-variant')) }}">{{ $option->option_text }}</span>
                                     @if($isSelected && !$isCorrectOption)
                                         <span class="material-symbols-outlined text-error text-sm mr-auto" style="font-variation-settings: 'FILL' 1;">close</span>
                                     @elseif($isCorrectOption && !$isSelected)
