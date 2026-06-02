@@ -38,15 +38,12 @@
                 <span class="material-symbols-outlined text-primary text-[28px]" style="font-variation-settings: 'FILL' 1;">summarize</span>
             </div>
 
-            <div class="prose prose-invert prose-lg max-w-none text-on-surface leading-relaxed marker:text-primary">
-                {{-- استخدام nl2br لتحويل النزول للسطر \n إلى <br> مع e() للحماية من ثغرات XSS --}}
-                {!! nl2br(e($summaryText)) !!}
-            </div>
+            <div id="summary-content" class="md-content text-on-surface leading-relaxed"></div>
         </div>
 
-        <!-- أدوات سفلية (اختيارية للطباعة أو النسخ) -->
+        <!-- أدوات سفلية -->
         <div class="relative z-10 mt-12 pt-6 border-t border-outline-variant/20 flex items-center justify-end gap-4">
-            <button onclick="navigator.clipboard.writeText(`{{ $summaryText }}`); alert('تم نسخ الملخص!');" class="text-on-surface-variant hover:text-white flex items-center gap-2 text-sm transition-colors">
+            <button id="copy-btn" class="text-on-surface-variant hover:text-white flex items-center gap-2 text-sm transition-colors">
                 <span class="font-bold">نسخ النص</span>
                 <span class="material-symbols-outlined text-sm">content_copy</span>
             </button>
@@ -58,3 +55,38 @@
     </div>
 </div>
 @endsection
+
+@push('styles')
+<style>
+    .md-content { direction: rtl; text-align: right; }
+    .md-content h1, .md-content h2, .md-content h3, .md-content h4 { color: #e2e2e5; font-weight: 800; margin-top: 1.5em; margin-bottom: 0.5em; }
+    .md-content h1 { font-size: 1.5rem; }
+    .md-content h2 { font-size: 1.25rem; border-bottom: 1px solid rgba(68,70,84,0.4); padding-bottom: 0.4em; }
+    .md-content h3 { font-size: 1.1rem; color: #b9c3ff; }
+    .md-content p { margin-bottom: 0.8em; color: #c4c5d7; line-height: 1.9; }
+    .md-content ul, .md-content ol { margin-bottom: 1em; padding-right: 1.5em; color: #c4c5d7; }
+    .md-content li { margin-bottom: 0.4em; line-height: 1.8; }
+    .md-content li::marker { color: #b9c3ff; }
+    .md-content strong { color: #e2e2e5; font-weight: 700; }
+    .md-content em { color: #f9abff; font-style: italic; }
+    .md-content code { background: rgba(185,195,255,0.1); color: #b9c3ff; padding: 0.15em 0.4em; border-radius: 0.375rem; font-size: 0.875em; }
+    .md-content pre { background: #0c0e10; border: 1px solid rgba(68,70,84,0.4); border-radius: 0.75rem; padding: 1em; margin-bottom: 1em; overflow-x: auto; direction: ltr; text-align: left; }
+    .md-content pre code { background: none; padding: 0; color: #c4c5d7; }
+    .md-content blockquote { border-right: 4px solid #6e88ff; padding-right: 1em; margin-right: 0; margin-bottom: 1em; color: #8e90a0; }
+    .md-content table { width: 100%; border-collapse: collapse; margin-bottom: 1em; }
+    .md-content th, .md-content td { border: 1px solid rgba(68,70,84,0.4); padding: 0.5em 0.75em; text-align: right; }
+    .md-content th { background: rgba(185,195,255,0.05); color: #e2e2e5; font-weight: 700; }
+    .md-content hr { border-color: rgba(68,70,84,0.4); margin: 1.5em 0; }
+</style>
+@endpush
+
+@push('scripts')
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<script>
+    const raw = @json($summaryText);
+    document.getElementById('summary-content').innerHTML = marked.parse(raw);
+    document.getElementById('copy-btn').addEventListener('click', function() {
+        navigator.clipboard.writeText(raw).then(() => alert('تم نسخ الملخص!'));
+    });
+</script>
+@endpush

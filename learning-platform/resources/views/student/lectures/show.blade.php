@@ -54,7 +54,7 @@
                         <span class="material-symbols-outlined text-tertiary text-2xl" style="font-variation-settings: 'FILL' 1;">psychology</span>
                         <h3 class="text-lg font-bold text-white font-plus-jakarta">ملخص الذكاء الاصطناعي</h3>
                     </div>
-                    <p id="ai-summary-text" class="text-on-surface-variant text-sm leading-relaxed text-right"></p>
+                    <div id="ai-summary-text" class="md-content text-on-surface-variant text-sm leading-relaxed text-right"></div>
                 </div>
             </div>
         </div>
@@ -79,7 +79,25 @@
     </div>
 @endsection
 
+@push('styles')
+<style>
+    .md-content { direction: rtl; text-align: right; }
+    .md-content h1, .md-content h2, .md-content h3 { color: #e2e2e5; font-weight: 800; margin-top: 1em; margin-bottom: 0.4em; }
+    .md-content h2 { font-size: 1.1rem; border-bottom: 1px solid rgba(68,70,84,0.4); padding-bottom: 0.3em; }
+    .md-content h3 { font-size: 1rem; color: #b9c3ff; }
+    .md-content p { margin-bottom: 0.6em; color: #c4c5d7; line-height: 1.8; }
+    .md-content ul, .md-content ol { margin-bottom: 0.8em; padding-right: 1.5em; color: #c4c5d7; }
+    .md-content li { margin-bottom: 0.3em; line-height: 1.7; }
+    .md-content li::marker { color: #b9c3ff; }
+    .md-content strong { color: #e2e2e5; }
+    .md-content em { color: #f9abff; }
+    .md-content code { background: rgba(185,195,255,0.1); color: #b9c3ff; padding: 0.1em 0.3em; border-radius: 0.25rem; font-size: 0.85em; }
+    .md-content blockquote { border-right: 3px solid #6e88ff; padding-right: 0.8em; margin-right: 0; color: #8e90a0; }
+</style>
+@endpush
+
 @push('scripts')
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <script>
     document.getElementById('ai-summarize-btn')?.addEventListener('click', async function() {
         const lectureId = this.dataset.lectureId;
@@ -106,10 +124,10 @@
                 return;
             }
             const data = await res.json();
-            summaryText.textContent = data.summary || 'لم يتم استلام ملخص.';
+            summaryText.innerHTML = marked.parse(data.summary || 'لم يتم استلام ملخص.');
             summaryEl.classList.remove('hidden');
         } catch (e) {
-            summaryText.textContent = 'خطأ: ' + e.message;
+            summaryText.innerHTML = 'خطأ: ' + e.message;
             summaryEl.classList.remove('hidden');
         } finally {
             btn.disabled = false;

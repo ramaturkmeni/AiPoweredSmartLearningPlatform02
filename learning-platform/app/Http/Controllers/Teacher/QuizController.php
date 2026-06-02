@@ -59,8 +59,11 @@ public function index()
 
         $generated = $this->ai->generateQuiz($lecture->content_text ?? '', 10, $pdfPath);
 
-        DB::transaction(function () use ($lecture, $generated) {
-            // إنشاء الاختبار
+        if (empty($generated['questions'])) {
+            return back()->with('error', 'لم يتمكن الذكاء الاصطناعي من توليد أسئلة. يرجى المحاولة مرة أخرى.');
+        }
+
+        $quiz = DB::transaction(function () use ($lecture, $generated) {
             $quiz = Quiz::create([
                 'lecture_id'     => $lecture->id,
                 'title'          => 'اختبار: ' . $lecture->title,
@@ -68,7 +71,6 @@ public function index()
                 'status'         => 'draft',
             ]);
 
-            // حفظ الأسئلة والخيارات
             foreach ($generated['questions'] as $q) {
                 $question = Question::create([
                     'quiz_id'       => $quiz->id,
@@ -83,9 +85,11 @@ public function index()
                     ]);
                 }
             }
+
+            return $quiz;
         });
 
-        return redirect()->route('teacher.quizzes.review', $lecture->quiz->id)
+        return redirect()->route('teacher.quizzes.review', $quiz->id)
                          ->with('success', 'تم توليد الاختبار بنجاح 🤖');
     }
 
