@@ -14,7 +14,7 @@ class AIService
     public function __construct()
     {
         $this->apiKey = config('services.gemini.key', '');
-        $this->model = config('services.gemini.model', 'gemini-2.0-flash-lite');
+        $this->model = config('services.gemini.model', 'gemini-flash-latest');
         $this->baseUrl = 'https://generativelanguage.googleapis.com/v1beta/models/';
     }
 
@@ -73,9 +73,11 @@ class AIService
     protected function call(string $prompt): string
     {
         try {
-            $url = $this->baseUrl . $this->model . ':generateContent?key=' . $this->apiKey;
+            $url = $this->baseUrl . $this->model . ':generateContent';
 
-            $response = Http::timeout(120)->post($url, [
+            $response = Http::withHeaders([
+                'X-goog-api-key' => $this->apiKey,
+            ])->timeout(120)->post($url, [
                 'contents' => [
                     [
                         'parts' => [
@@ -89,15 +91,16 @@ class AIService
             ]);
 
             if ($response->failed()) {
-                Log::error('Gemini API error: ' . $response->body());
-                return 'عذراً، حدث خطأ أثناء الاتصال بالذكاء الاصطناعي.';
+                $error = $response->json('error.message', $response->body());
+                Log::error('Gemini API error: ' . $error);
+                return 'خطأ من Gemini API: ' . mb_substr($error, 0, 200);
             }
 
             return $response->json('candidates.0.content.parts.0.text', '');
 
         } catch (\Exception $e) {
             Log::error('AIService exception: ' . $e->getMessage());
-            return 'عذراً، تعذر إتمام العملية في الوقت الحالي.';
+            return 'خطأ في الاتصال: ' . $e->getMessage();
         }
     }
 
@@ -105,14 +108,15 @@ class AIService
     {
         try {
             if (!file_exists($pdfPath)) {
-                Log::error('AIService: PDF not found at ' . $pdfPath);
-                return 'عذراً، ملف المحاضرة غير موجود.';
+                return 'ملف المحاضرة غير موجود في المسار: ' . basename($pdfPath);
             }
 
             $pdfData = base64_encode(file_get_contents($pdfPath));
-            $url = $this->baseUrl . $this->model . ':generateContent?key=' . $this->apiKey;
+            $url = $this->baseUrl . $this->model . ':generateContent';
 
-            $response = Http::timeout(180)->post($url, [
+            $response = Http::withHeaders([
+                'X-goog-api-key' => $this->apiKey,
+            ])->timeout(180)->post($url, [
                 'contents' => [
                     [
                         'parts' => [
@@ -132,15 +136,16 @@ class AIService
             ]);
 
             if ($response->failed()) {
-                Log::error('Gemini API error (PDF): ' . $response->body());
-                return 'عذراً، حدث خطأ أثناء تحليل الملف بالذكاء الاصطناعي.';
+                $error = $response->json('error.message', $response->body());
+                Log::error('Gemini API error (PDF): ' . $error);
+                return 'خطأ من Gemini API: ' . mb_substr($error, 0, 200);
             }
 
             return $response->json('candidates.0.content.parts.0.text', '');
 
         } catch (\Exception $e) {
             Log::error('AIService PDF exception: ' . $e->getMessage());
-            return 'عذراً، تعذر تحليل الملف في الوقت الحالي.';
+            return 'خطأ في الاتصال: ' . $e->getMessage();
         }
     }
 }

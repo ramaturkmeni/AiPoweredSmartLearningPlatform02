@@ -100,13 +100,16 @@
                     'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '{{ csrf_token() }}'
                 }
             });
-            const data = await res.json();
-            if (data.summary) {
-                summaryText.textContent = data.summary;
+            if (!res.ok) {
+                summaryText.textContent = 'خطأ من السيرفر: ' + res.status + ' ' + res.statusText;
                 summaryEl.classList.remove('hidden');
+                return;
             }
+            const data = await res.json();
+            summaryText.textContent = data.summary || 'لم يتم استلام ملخص.';
+            summaryEl.classList.remove('hidden');
         } catch (e) {
-            summaryText.textContent = 'حدث خطأ أثناء التلخيص. يرجى المحاولة لاحقاً.';
+            summaryText.textContent = 'خطأ: ' + e.message;
             summaryEl.classList.remove('hidden');
         } finally {
             btn.disabled = false;
