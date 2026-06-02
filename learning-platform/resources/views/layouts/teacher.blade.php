@@ -188,7 +188,7 @@
                 </div>
                 <div class="h-8 w-px bg-slate-700/50"></div>
                 <div class="flex items-center gap-3">
-                    <span class="text-indigo-200 font-bold text-sm font-plus-jakarta">مرحباً، د. {{ auth()->user()->first_name }}</span>
+                    <span class="text-indigo-200 font-bold text-sm font-plus-jakarta">مرحباً، د. {{ auth()->user()->teacher->first_name ?? auth()->user()->username }}</span>
                 </div>
             </div>
             <div class="relative w-96">

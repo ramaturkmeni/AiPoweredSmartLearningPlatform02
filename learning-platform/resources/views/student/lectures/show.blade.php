@@ -18,10 +18,10 @@
                     <div class="text-on-surface-variant leading-relaxed whitespace-pre-wrap text-right mb-6">{{ $lecture->content_text }}</div>
                 @endif
 
-                @if($lecture->file_path)
+                @if($lecture->file_url)
                     <div class="flex flex-row-reverse items-center gap-3 p-4 bg-surface-container-low rounded-xl mb-4">
                         <span class="material-symbols-outlined text-primary text-2xl">description</span>
-                        <a href="{{ Storage::url($lecture->file_path) }}" target="_blank" class="text-primary font-bold text-sm hover:underline">تحميل الملف المرفق</a>
+                        <a href="{{ Storage::url($lecture->file_url) }}" target="_blank" class="text-primary font-bold text-sm hover:underline">تحميل الملف المرفق</a>
                     </div>
                 @endif
 
@@ -95,6 +95,8 @@
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
                     'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || '{{ csrf_token() }}'
                 }
             });

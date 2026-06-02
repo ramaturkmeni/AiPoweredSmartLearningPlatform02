@@ -51,10 +51,10 @@
             <div class="px-6 py-4 border-b border-outline-variant/10 flex items-center justify-between flex-row-reverse hover:bg-surface-container-high transition-colors">
                 <div class="flex items-center gap-4 flex-row-reverse">
                     <div class="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center text-primary font-bold">
-                        {{ mb_substr($attempt->student->user->first_name ?? '؟', 0, 1) }}
+                        {{ mb_substr($attempt->student->first_name ?? '؟', 0, 1) }}
                     </div>
                     <div class="text-right">
-                        <p class="text-sm font-bold text-white">{{ $attempt->student->user->first_name ?? '' }} {{ $attempt->student->user->last_name ?? '' }}</p>
+                        <p class="text-sm font-bold text-white">{{ $attempt->student->first_name ?? '' }} {{ $attempt->student->last_name ?? '' }}</p>
                         {{-- <p class="text-xs text-on-surface-variant">{{ $attempt->created_at->format('Y/m/d H:i') }}</p> --}}
                         <p class="text-xs text-on-surface-variant">
     {{ $attempt->taken_at ? $attempt->taken_at->format('Y/m/d H:i') : 'تاريخ غير معروف' }}

@@ -1,6 +1,6 @@
 @extends('layouts.student')
 
-@section('title', '{{ $course->title }} - Smart Learn')
+@section('title', $course->title . ' - Smart Learn')
 
 @section('page-content')
     <div class="mb-10 text-right">

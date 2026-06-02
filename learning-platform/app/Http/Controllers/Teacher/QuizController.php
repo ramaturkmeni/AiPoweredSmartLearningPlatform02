@@ -11,6 +11,7 @@ use App\Services\AIService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 
 class QuizController extends Controller
 {
@@ -46,12 +47,17 @@ public function index()
     public function generate(Lecture $lecture)
     {
         $this->authorizeTeacher($lecture);
-
-        abort_if(!$lecture->content_text, 422, 'المحاضرة لا تحتوي على نص للتحليل.');
         abort_if($lecture->hasQuiz(), 422, 'هذه المحاضرة لديها اختبار بالفعل.');
 
-        // استدعاء الذكاء الاصطناعي
-        $generated = $this->ai->generateQuiz($lecture->content_text);
+        $pdfPath = null;
+        if ($lecture->file_url && Storage::disk('public')->exists($lecture->file_url)) {
+            $pdfPath = Storage::disk('public')->path($lecture->file_url);
+        }
+
+        $hasContent = $lecture->content_text || $pdfPath;
+        abort_if(!$hasContent, 422, 'المحاضرة لا تحتوي على محتوى للتحليل (لا نص ولا ملف).');
+
+        $generated = $this->ai->generateQuiz($lecture->content_text ?? '', 10, $pdfPath);
 
         DB::transaction(function () use ($lecture, $generated) {
             // إنشاء الاختبار

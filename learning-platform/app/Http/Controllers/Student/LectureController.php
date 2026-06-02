@@ -5,8 +5,9 @@ namespace App\Http\Controllers\Student;
 use App\Http\Controllers\Controller;
 use App\Models\Lecture;
 use App\Services\AIService;
-use Illuminate\Http\Request; // تم إضافة استدعاء Request هنا
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 
 class LectureController extends Controller
 {
@@ -27,47 +28,49 @@ class LectureController extends Controller
         return view('student.lectures.show', compact('lecture', 'courseLectures', 'quiz'));
     }
 
-    // تم إضافة Request $request لتلقي بيانات مستوى التلخيص
     public function summarize(Request $request, Lecture $lecture)
     {
         $student = Auth::user()->student;
 
-        // التحقق من صلاحيات الطالب
         abort_if(
             !$student->isEnrolledIn($lecture->course_id),
             403, 'يجب التسجيل في المادة أولاً.'
         );
 
-        // التحقق من وجود نص للمحاضرة
-        abort_if(!$lecture->content_text, 422, 'لا يوجد نص لهذه المحاضرة.');
-
-        // 1. استقبال مستوى التلخيص من الفورم (الافتراضي: medium)
         $level = $request->input('level', 'medium');
+        $pdfPath = null;
 
-        // 2. إرسال النص ومستوى التلخيص للذكاء الاصطناعي
-        $summaryResult = $this->ai->summarize($lecture->content_text, $level);
+        if ($lecture->file_url && Storage::disk('public')->exists($lecture->file_url)) {
+            $pdfPath = Storage::disk('public')->path($lecture->file_url);
+        }
 
-        // 3. التحقق مما إذا كان~ الذكاء الاصطناعي قد أرجع النتيجة على شكل JSON (كما حدث سابقاً)
+        $hasContent = $lecture->content_text || $pdfPath;
+        abort_if(!$hasContent, 422, 'لا يوجد محتوى لهذه المحاضرة (لا نص ولا ملف).');
+
+        $summaryResult = $this->ai->summarize(
+            $lecture->content_text ?? '',
+            $level,
+            $pdfPath
+        );
+
+
         $decoded = json_decode($summaryResult, true);
         if (json_last_error() === JSON_ERROR_NONE && isset($decoded['summary'])) {
             $summaryText = $decoded['summary'];
         } else {
-            // إذا كان النص عادياً وليس JSON
             $summaryText = $summaryResult;
         }
 
-        // 4. تحويل مستوى التلخيص لاسم عربي لعرضه في الواجهة بوضوح
+        if ($request->wantsJson() || $request->ajax()) {
+            return response()->json(['summary' => $summaryText]);
+        }
+
         $levelName = match($level) {
             'brief'    => 'موجز سريع',
             'detailed' => 'مفصل وعميق',
             default    => 'متوازن',
         };
 
-        // 5. توجيه الطالب إلى صفحة العرض الخاصة بالملخص
         return view('student.summary', compact('lecture', 'summaryText', 'levelName'));
     }
 }
-
-
-
-

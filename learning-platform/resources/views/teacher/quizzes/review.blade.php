@@ -80,30 +80,26 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                             <label class="block text-on-surface-variant text-sm font-medium mb-2 text-right">الخيار الأول (الإجابة الصحيحة)</label>
-                            <input type="text" name="option_1" required class="w-full bg-surface-container-low border border-outline-variant/30 rounded-xl px-4 py-3 text-on-surface text-sm focus:ring-2 focus:ring-primary focus:border-transparent text-right" placeholder="الخيار 1">
+                            <input type="text" name="options[0][text]" required class="w-full bg-surface-container-low border border-outline-variant/30 rounded-xl px-4 py-3 text-on-surface text-sm focus:ring-2 focus:ring-primary focus:border-transparent text-right" placeholder="الخيار 1">
+                            <input type="hidden" name="options[0][is_correct]" value="1">
                         </div>
                         <div>
                             <label class="block text-on-surface-variant text-sm font-medium mb-2 text-right">الخيار الثاني</label>
-                            <input type="text" name="option_2" required class="w-full bg-surface-container-low border border-outline-variant/30 rounded-xl px-4 py-3 text-on-surface text-sm focus:ring-2 focus:ring-primary focus:border-transparent text-right" placeholder="الخيار 2">
+                            <input type="text" name="options[1][text]" required class="w-full bg-surface-container-low border border-outline-variant/30 rounded-xl px-4 py-3 text-on-surface text-sm focus:ring-2 focus:ring-primary focus:border-transparent text-right" placeholder="الخيار 2">
+                            <input type="hidden" name="options[1][is_correct]" value="0">
                         </div>
                         <div>
                             <label class="block text-on-surface-variant text-sm font-medium mb-2 text-right">الخيار الثالث</label>
-                            <input type="text" name="option_3" required class="w-full bg-surface-container-low border border-outline-variant/30 rounded-xl px-4 py-3 text-on-surface text-sm focus:ring-2 focus:ring-primary focus:border-transparent text-right" placeholder="الخيار 3">
+                            <input type="text" name="options[2][text]" required class="w-full bg-surface-container-low border border-outline-variant/30 rounded-xl px-4 py-3 text-on-surface text-sm focus:ring-2 focus:ring-primary focus:border-transparent text-right" placeholder="الخيار 3">
+                            <input type="hidden" name="options[2][is_correct]" value="0">
                         </div>
                         <div>
                             <label class="block text-on-surface-variant text-sm font-medium mb-2 text-right">الخيار الرابع</label>
-                            <input type="text" name="option_4" required class="w-full bg-surface-container-low border border-outline-variant/30 rounded-xl px-4 py-3 text-on-surface text-sm focus:ring-2 focus:ring-primary focus:border-transparent text-right" placeholder="الخيار 4">
+                            <input type="text" name="options[3][text]" required class="w-full bg-surface-container-low border border-outline-variant/30 rounded-xl px-4 py-3 text-on-surface text-sm focus:ring-2 focus:ring-primary focus:border-transparent text-right" placeholder="الخيار 4">
+                            <input type="hidden" name="options[3][is_correct]" value="0">
                         </div>
                     </div>
-                    <div>
-                        <label class="block text-on-surface-variant text-sm font-medium mb-2 text-right">الإجابة الصحيحة</label>
-                        <select name="correct_option" required class="w-full bg-surface-container-low border border-outline-variant/30 rounded-xl px-4 py-3 text-on-surface text-sm focus:ring-2 focus:ring-primary focus:border-transparent text-right">
-                            <option value="1">الخيار الأول</option>
-                            <option value="2">الخيار الثاني</option>
-                            <option value="3">الخيار الثالث</option>
-                            <option value="4">الخيار الرابع</option>
-                        </select>
-                    </div>
+                    <p class="text-on-surface-variant text-xs text-right">الخيار الأول هو الإجابة الصحيحة افتراضياً. يمكنك تعديل ذلك من خلال النقر على زر النشر بعد الإضافة.</p>
                     <button type="submit" class="bg-primary text-on-primary-fixed px-6 py-3 rounded-xl font-bold text-sm hover:opacity-90 transition-all flex items-center gap-2">
                         <span class="material-symbols-outlined text-lg">add</span>
                         إضافة السؤال

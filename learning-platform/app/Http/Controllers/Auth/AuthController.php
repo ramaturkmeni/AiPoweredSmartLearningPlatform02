@@ -112,6 +112,17 @@ class AuthController extends Controller
         $user    = Auth::user();
         $profile = $user->getProfile();
 
+        if ($request->filled('current_password')) {
+            $request->validate([
+                'current_password' => ['required', 'current_password'],
+                'password'         => ['required', 'confirmed', Password::min(8)],
+            ]);
+
+            $user->update(['password' => Hash::make($request->password)]);
+
+            return back()->with('success', 'تم تحديث كلمة المرور بنجاح ✓');
+        }
+
         $rules = [
             'first_name' => ['required', 'string', 'max:50'],
             'last_name'  => ['required', 'string', 'max:50'],

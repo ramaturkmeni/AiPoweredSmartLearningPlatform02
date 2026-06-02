@@ -8,13 +8,23 @@
     </div>
 
     <div class="bg-surface-container-low rounded-2xl p-6 mb-8 flex flex-row-reverse items-center justify-between sticky top-20 z-30 backdrop-blur-xl">
-        <div class="flex flex-row-reverse items-center gap-4">
-            <span class="material-symbols-outlined text-tertiary text-2xl" style="font-variation-settings: 'FILL' 1;">timer</span>
-            <div class="text-right">
-                <p class="text-[10px] text-on-surface-variant">الوقت المتبقي</p>
-                <p id="quiz-timer" class="text-2xl font-black text-white font-plus-jakarta">{{ $quiz->duration }}:00</p>
+        @if($quiz->duration)
+            <div class="flex flex-row-reverse items-center gap-4">
+                <span class="material-symbols-outlined text-tertiary text-2xl" style="font-variation-settings: 'FILL' 1;">timer</span>
+                <div class="text-right">
+                    <p class="text-[10px] text-on-surface-variant">الوقت المتبقي</p>
+                    <p id="quiz-timer" class="text-2xl font-black text-white font-plus-jakarta">{{ $quiz->duration }}:00</p>
+                </div>
             </div>
-        </div>
+        @else
+            <div class="flex flex-row-reverse items-center gap-4">
+                <span class="material-symbols-outlined text-on-surface-variant text-2xl">timer_off</span>
+                <div class="text-right">
+                    <p class="text-[10px] text-on-surface-variant">الوقت</p>
+                    <p class="text-lg font-bold text-on-surface-variant font-plus-jakarta">مفتوح</p>
+                </div>
+            </div>
+        @endif
         <div class="flex flex-row-reverse items-center gap-3">
             <span class="material-symbols-outlined text-on-surface-variant">quiz</span>
             <span class="text-on-surface-variant text-sm">{{ $quiz->questions->count() }} سؤال</span>
@@ -31,7 +41,7 @@
                             <span class="text-primary font-black text-sm">{{ $qIndex + 1 }}</span>
                         </div>
                         <div class="flex-1 text-right">
-                            <p class="text-white font-bold text-sm leading-relaxed">{{ $question->text }}</p>
+                            <p class="text-white font-bold text-sm leading-relaxed">{{ $question->question_text }}</p>
                         </div>
                     </div>
 
@@ -39,7 +49,7 @@
                         @foreach($question->options as $oIndex => $option)
                             <label class="flex flex-row-reverse items-center gap-4 p-4 rounded-xl bg-surface-container-low border border-transparent hover:border-primary/20 cursor-pointer transition-all has-[:checked]:border-primary/40 has-[:checked]:bg-primary/5">
                                 <input type="radio" name="answers[{{ $qIndex }}][option_id]" value="{{ $option->id }}" class="w-5 h-5 text-primary border-outline-variant focus:ring-primary bg-surface-container shrink-0" required/>
-                                <span class="text-on-surface-variant text-sm">{{ $option->text }}</span>
+                                <span class="text-on-surface-variant text-sm">{{ $option->option_text }}</span>
                             </label>
                         @endforeach
                     </div>
@@ -61,7 +71,9 @@
 @push('scripts')
 <script>
     (function() {
-        const duration = {{ $quiz->duration }};
+        const duration = {{ $quiz->duration ?? 0 }};
+        if (duration <= 0) return;
+
         let seconds = duration * 60;
         const timerEl = document.getElementById('quiz-timer');
 

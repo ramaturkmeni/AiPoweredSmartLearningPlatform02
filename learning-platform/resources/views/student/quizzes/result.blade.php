@@ -11,8 +11,8 @@
         <div class="w-32 h-32 mx-auto rounded-full flex items-center justify-center mb-6 {{ $attempt->score >= 60 ? 'bg-success/10 border-4 border-success' : 'bg-error/10 border-4 border-error' }}">
             <span class="text-5xl font-black font-plus-jakarta {{ $attempt->score >= 60 ? 'text-success' : 'text-error' }}">{{ $attempt->score }}</span>
         </div>
-        <h3 class="text-xl font-bold text-white mb-2">{{ $attempt->score >= 60 ? 'تهانينا! لقد نجحت' : 'لم تحصل على درجة النج' }}</h3>
-        <p class="text-on-surface-variant text-sm">تم تسليم الاختبار بتاريخ {{ $attempt->taken_at->format('Y/m/d H:i') }}</p>
+        <h3 class="text-xl font-bold text-white mb-2">{{ $attempt->score >= 60 ? 'تهانينا! لقد نجحت' : 'لم تحصل على درجة النجاح' }}</h3>
+        <p class="text-on-surface-variant text-sm">تاريخ الاختبار: {{ $attempt->taken_at ? $attempt->taken_at->format('Y/m/d H:i') : '-' }}</p>
     </div>
 
     <div class="mb-6 flex justify-between items-center flex-row-reverse">
@@ -35,7 +35,7 @@
                     </div>
                     <div class="flex-1 text-right">
                         <p class="text-white font-bold mb-1">السؤال {{ $index + 1 }}</p>
-                        <p class="text-on-surface-variant text-sm mb-4">{{ $question->text }}</p>
+                        <p class="text-on-surface-variant text-sm mb-4">{{ $question->question_text }}</p>
 
                         <div class="space-y-2">
                             @foreach($question->options as $option)
@@ -51,7 +51,7 @@
                                             <div class="w-3 h-3 rounded-full bg-success"></div>
                                         @endif
                                     </div>
-                                    <span class="text-sm {{ $isSelected && $isCorrectOption ? 'text-success font-bold' : ($isSelected ? 'text-error font-bold' : ($isCorrectOption ? 'text-success' : 'text-on-surface-variant')) }}">{{ $option->text }}</span>
+                                    <span class="text-sm {{ $isSelected && $isCorrectOption ? 'text-success font-bold' : ($isSelected ? 'text-error font-bold' : ($isCorrectOption ? 'text-success' : 'text-on-surface-variant')) }}">{{ $option->option_text }}</span>
                                     @if($isSelected && !$isCorrectOption)
                                         <span class="material-symbols-outlined text-error text-sm mr-auto" style="font-variation-settings: 'FILL' 1;">close</span>
                                     @elseif($isCorrectOption && !$isSelected)

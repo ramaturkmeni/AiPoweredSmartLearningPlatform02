@@ -29,8 +29,8 @@
                         <td class="px-6 py-4 text-on-surface-variant font-medium">{{ $lecture->order_index }}</td>
                         <td class="px-6 py-4 text-white font-bold">{{ $lecture->title }}</td>
                         <td class="px-6 py-4">
-                            @if($lecture->file_path)
-                                <a href="{{ Storage::url($lecture->file_path) }}" class="text-primary hover:underline inline-flex items-center gap-1 text-sm">
+                            @if($lecture->file_url)
+                                <a href="{{ Storage::url($lecture->file_url) }}" class="text-primary hover:underline inline-flex items-center gap-1 text-sm">
                                     <span class="material-symbols-outlined text-sm">description</span>
                                     ملف
                                 </a>

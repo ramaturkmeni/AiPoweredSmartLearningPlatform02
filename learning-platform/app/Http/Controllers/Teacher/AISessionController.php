@@ -14,7 +14,7 @@ class AISessionController extends Controller
         $lectures = $teacher->courses()
                             ->with('lectures')
                             ->get()
-                            ->flatMap(fn($c) => $c->lectures);
+                            ->flatMap(fn($c) => $c->lectures->each(fn($l) => $l->setRelation('course', $c)));
 
         return view('teacher.ai-session', compact('lectures'));
     }
