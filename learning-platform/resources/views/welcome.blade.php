@@ -70,7 +70,6 @@
         <div class="hidden md:flex flex-row-reverse gap-8 items-center">
             <a class="text-blue-400 border-b-2 border-blue-400 pb-1 font-plus-jakarta leading-relaxed hover:text-blue-200 transition-colors duration-300" href="#">الرئيسية</a>
             <a class="text-slate-400 font-plus-jakarta leading-relaxed hover:text-blue-200 transition-colors duration-300" href="#features">المميزات</a>
-            <a class="text-slate-400 font-plus-jakarta leading-relaxed hover:text-blue-200 transition-colors duration-300" href="#pricing">التسعير</a>
             <a class="text-slate-400 font-plus-jakarta leading-relaxed hover:text-blue-200 transition-colors duration-300" href="{{ route('login') }}">منصة الطلاب</a>
         </div>
 

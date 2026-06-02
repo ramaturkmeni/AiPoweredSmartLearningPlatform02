@@ -47,7 +47,7 @@ class LectureController extends Controller
         // 2. إرسال النص ومستوى التلخيص للذكاء الاصطناعي
         $summaryResult = $this->ai->summarize($lecture->content_text, $level);
 
-        // 3. التحقق مما إذا كان الذكاء الاصطناعي قد أرجع النتيجة على شكل JSON (كما حدث سابقاً)
+        // 3. التحقق مما إذا كان~ الذكاء الاصطناعي قد أرجع النتيجة على شكل JSON (كما حدث سابقاً)
         $decoded = json_decode($summaryResult, true);
         if (json_last_error() === JSON_ERROR_NONE && isset($decoded['summary'])) {
             $summaryText = $decoded['summary'];
