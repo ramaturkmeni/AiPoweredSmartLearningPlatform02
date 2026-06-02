@@ -22,11 +22,9 @@ class QuizController extends Controller
             403, 'يجب التسجيل في المادة أولاً.'
         );
 
-        $attempt = StudentQuizAttempt::create([
-            'student_id' => $student->id,
-            'quiz_id'    => $quiz->id,
-            'status'     => 'in_progress',
-        ]);
+        $attempt = StudentQuizAttempt::firstOrCreate(
+            ['student_id' => $student->id, 'quiz_id' => $quiz->id, 'status' => 'in_progress'],
+        );
 
         $quiz->load('questions.options');
 

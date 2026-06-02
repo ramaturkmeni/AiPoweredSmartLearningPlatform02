@@ -8,13 +8,23 @@
     </div>
 
     <div class="bg-surface-container-low rounded-2xl p-6 mb-8 flex flex-row-reverse items-center justify-between sticky top-20 z-30 backdrop-blur-xl">
-        <div class="flex flex-row-reverse items-center gap-4">
-            <span class="material-symbols-outlined text-tertiary text-2xl" style="font-variation-settings: 'FILL' 1;">timer</span>
-            <div class="text-right">
-                <p class="text-[10px] text-on-surface-variant">الوقت المتبقي</p>
-                <p id="quiz-timer" class="text-2xl font-black text-white font-plus-jakarta">{{ $quiz->duration }}:00</p>
+        @if($quiz->duration)
+            <div class="flex flex-row-reverse items-center gap-4">
+                <span class="material-symbols-outlined text-tertiary text-2xl" style="font-variation-settings: 'FILL' 1;">timer</span>
+                <div class="text-right">
+                    <p class="text-[10px] text-on-surface-variant">الوقت المتبقي</p>
+                    <p id="quiz-timer" class="text-2xl font-black text-white font-plus-jakarta">{{ $quiz->duration }}:00</p>
+                </div>
             </div>
-        </div>
+        @else
+            <div class="flex flex-row-reverse items-center gap-4">
+                <span class="material-symbols-outlined text-on-surface-variant text-2xl">timer_off</span>
+                <div class="text-right">
+                    <p class="text-[10px] text-on-surface-variant">الوقت</p>
+                    <p class="text-lg font-bold text-on-surface-variant font-plus-jakarta">مفتوح</p>
+                </div>
+            </div>
+        @endif
         <div class="flex flex-row-reverse items-center gap-3">
             <span class="material-symbols-outlined text-on-surface-variant">quiz</span>
             <span class="text-on-surface-variant text-sm">{{ $quiz->questions->count() }} سؤال</span>
@@ -61,7 +71,9 @@
 @push('scripts')
 <script>
     (function() {
-        const duration = {{ $quiz->duration }};
+        const duration = {{ $quiz->duration ?? 0 }};
+        if (duration <= 0) return;
+
         let seconds = duration * 60;
         const timerEl = document.getElementById('quiz-timer');
 
