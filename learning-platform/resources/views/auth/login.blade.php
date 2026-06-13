@@ -5,9 +5,11 @@
     <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
     <title>تسجيل الدخول - Smart Learn</title>
 
+    <!-- خطوط جوجل المتميزة -->
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600&family=Noto+Kufi+Arabic:wght@400;500;600;700&display=swap" rel="stylesheet"/>
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
 
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <script id="tailwind-config">
         tailwind.config = {
@@ -47,10 +49,10 @@
                         "inverse-primary": "#2d50d9",
                         "surface": "#121416",
                         "secondary-fixed-dim": "#ffb778",
-                        "on-secondary-fixed": "#2e1500",
+                        "on-secondary-fixed font-medium": "#2e1500",
                         "secondary-fixed": "#ffdcc1",
                         "inverse-on-surface": "#2f3133",
-                        "background": "#121416",
+                        "background": "#0b0f19", /* متوافق مع الصفحة الرئيسية */
                         "surface-container-lowest": "#0c0e10",
                         "on-error": "#690005",
                         "on-secondary-container": "#613400",
@@ -62,7 +64,7 @@
                         "tertiary": "#f9abff",
                         "error": "#ffb4ab",
                         "tertiary-fixed": "#ffd6fe",
-                        "success": "#10b981" // تمت الإضافة ليظهر المؤشر الأخضر
+                        "success": "#10b981"
                     },
                     fontFamily: {
                         "headline": ["Plus Jakarta Sans", "Noto Kufi Arabic"],
@@ -76,143 +78,153 @@
     <style>
         body {
             font-family: 'Inter', 'Noto Kufi Arabic', sans-serif;
-            background-color: #121416;
+            background-color: #0b0f19;
         }
         .material-symbols-outlined {
             font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
         }
         .login-gradient-glow {
-            background: radial-gradient(circle at 50% 50%, rgba(185, 195, 255, 0.08) 0%, transparent 70%);
+            background: radial-gradient(circle at 50% 50%, rgba(185, 195, 255, 0.04) 0%, transparent 70%);
         }
-        .input-focus-border:focus-within {
-            border-bottom: 2px solid #b9c3ff;
+        .glass-card {
+            background: rgba(17, 24, 39, 0.45);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.06);
         }
     </style>
 </head>
-<body class="bg-background text-on-background min-h-screen flex flex-col justify-center items-center p-4 relative overflow-hidden">
+<body class="bg-[#0b0f19] text-on-background min-h-screen flex flex-col justify-center items-center p-4 relative overflow-hidden">
 
-    <!-- Background Elements -->
+    <!-- الخلفيات الهندسية المضيئة -->
     <div class="absolute inset-0 login-gradient-glow pointer-events-none"></div>
-    <div class="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-primary-container/10 blur-[120px] rounded-full"></div>
-    <div class="absolute bottom-[-10%] right-[-10%] w-[30%] h-[30%] bg-tertiary-container/5 blur-[100px] rounded-full"></div>
+    <div class="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-primary-container/5 blur-[130px] rounded-full"></div>
+    <div class="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-tertiary-container/3 blur-[120px] rounded-full"></div>
 
-    <!-- Main Login Shell -->
+    <!-- حاوية تسجيل الدخول الرئيسية -->
     <main class="w-full max-w-[440px] z-10">
 
-        <!-- Logo Section -->
-        <a href="{{ route('home') }}" class="flex flex-col items-center mb-10 text-center hover:opacity-80 transition-opacity">
-            <div class="mb-4 bg-primary-container p-4 rounded-xl shadow-2xl shadow-primary/20">
-                <span class="material-symbols-outlined text-4xl text-on-primary-container">school</span>
+        <!-- الشعار والهوية البصرية -->
+        <a href="{{ route('home') }}" class="flex flex-col items-center mb-8 text-center group transition-all duration-300">
+            <div class="mb-4 bg-gradient-to-tr from-primary-container to-primary/80 p-3.5 rounded-2xl shadow-xl shadow-primary/20 transition-transform duration-500 group-hover:scale-105">
+                <span class="material-symbols-outlined text-3xl text-white">school</span>
             </div>
-            <h1 class="text-3xl font-black font-headline tracking-tight text-primary">Smart Learn</h1>
-            <p class="text-on-surface-variant mt-2 text-sm">بوابة المعرفة الذكية للمستقبل</p>
+            <h1 class="text-3xl font-black font-headline tracking-tight text-white transition-colors group-hover:text-primary-fixed-dim">Smart Learn</h1>
+            <p class="text-on-surface-variant mt-2 text-sm tracking-wide">بوابة المعرفة الذكية للمستقبل</p>
         </a>
 
-        <!-- Login Card -->
-        <div class="bg-surface-container-low rounded-xl p-8 md:p-10 shadow-2xl relative overflow-hidden">
-            <!-- Decorative Header Gradient -->
-            <div class="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-primary to-transparent opacity-30"></div>
+        <!-- كارت تسجيل الدخول المطور (Glass Card) -->
+        <div class="glass-card rounded-2xl p-8 md:p-10 shadow-2xl relative overflow-hidden transition-all duration-300 hover:border-primary/20">
+            <!-- خط إضاءة زخرفي بالأعلى -->
+            <div class="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-primary/40 to-transparent"></div>
 
             <div class="flex flex-col gap-6">
-                <!-- Laravel Form -->
-                <form method="POST" action="{{ route('login') }}" class="space-y-6">
+                <!-- نموذج تسجيل الدخول الخاص بـ Laravel -->
+                <form method="POST" action="{{ route('login') }}" class="space-y-5">
                     @csrf
 
-                    <!-- Username Field -->
+                    <!-- حقل اسم المستخدم -->
                     <div class="space-y-2">
-                        <label class="text-xs font-bold text-on-surface-variant uppercase tracking-widest block mr-1" for="username">اسم المستخدم</label>
-                        <div class="relative group input-focus-border">
+                        <label class="text-[11px] font-bold text-on-surface-variant/85 uppercase tracking-widest block mr-1" for="username">اسم المستخدم</label>
+                        <div class="relative group rounded-xl border border-white/5 bg-slate-950/40 transition-all duration-300 focus-within:border-primary/50 focus-within:ring-4 focus-within:ring-primary/10">
                             <div class="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
-                                <span class="material-symbols-outlined text-on-surface-variant group-focus-within:text-primary transition-colors">person</span>
+                                <span class="material-symbols-outlined text-on-surface-variant/70 group-focus-within:text-primary transition-colors">person</span>
                             </div>
-                            <input name="username" value="{{ old('username') }}" class="w-full bg-surface-container-lowest border-none text-on-surface py-4 pr-12 pl-4 rounded-xl focus:ring-0 placeholder:text-outline/50 transition-all" id="username" placeholder="أدخل اسم المستخدم" type="text" required autofocus/>
+                            <input name="username" value="{{ old('username') }}" class="w-full bg-transparent border-none text-on-surface py-3.5 pr-12 pl-4 rounded-xl focus:ring-0 placeholder:text-outline/40 text-sm transition-all" id="username" placeholder="أدخل اسم المستخدم" type="text" required autofocus/>
                         </div>
                         @error('username')
-                            <p class="text-error text-xs font-medium mt-1">{{ $message }}</p>
+                            <p class="text-error text-xs font-semibold mt-1 mr-1">{{ $message }}</p>
                         @enderror
                     </div>
 
-                    <!-- Password Field -->
+                    <!-- حقل كلمة المرور -->
                     <div class="space-y-2">
-                        <label class="text-xs font-bold text-on-surface-variant uppercase tracking-widest block mr-1" for="password">كلمة المرور</label>
-                        <div class="relative group input-focus-border">
+                        <label class="text-[11px] font-bold text-on-surface-variant/85 uppercase tracking-widest block mr-1" for="password">كلمة المرور</label>
+                        <div class="relative group rounded-xl border border-white/5 bg-slate-950/40 transition-all duration-300 focus-within:border-primary/50 focus-within:ring-4 focus-within:ring-primary/10">
                             <div class="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
-                                <span class="material-symbols-outlined text-on-surface-variant group-focus-within:text-primary transition-colors">lock</span>
+                                <span class="material-symbols-outlined text-on-surface-variant/70 group-focus-within:text-primary transition-colors">lock</span>
                             </div>
-                            <input name="password" class="w-full bg-surface-container-lowest border-none text-on-surface py-4 pr-12 pl-12 rounded-xl focus:ring-0 placeholder:text-outline/50 transition-all" id="password" placeholder="••••••••" type="password" required/>
+                            <input name="password" class="w-full bg-transparent border-none text-on-surface py-3.5 pr-12 pl-12 rounded-xl focus:ring-0 placeholder:text-outline/40 text-sm transition-all" id="password" placeholder="••••••••" type="password" required/>
 
-                            <!-- Toggle Password Button -->
-                            <button onclick="togglePassword()" class="absolute inset-y-0 left-0 pl-4 flex items-center text-on-surface-variant hover:text-on-surface" type="button">
-                                <span id="toggle-icon" class="material-symbols-outlined text-sm">visibility</span>
+                            <!-- زر إظهار وإخفاء كلمة المرور التفاعلي -->
+                            <button onclick="togglePassword()" class="absolute inset-y-0 left-0 pl-4 flex items-center text-on-surface-variant/70 hover:text-white transition-colors" type="button">
+                                <span id="toggle-icon" class="material-symbols-outlined text-[19px]">visibility</span>
                             </button>
                         </div>
                         @error('password')
-                            <p class="text-error text-xs font-medium mt-1">{{ $message }}</p>
+                            <p class="text-error text-xs font-semibold mt-1 mr-1">{{ $message }}</p>
                         @enderror
                     </div>
 
-                    <div class="flex items-center justify-between">
-                        <div class="flex items-center gap-2">
-                            <input name="remember" class="w-4 h-4 bg-surface-container-lowest border-outline-variant rounded text-primary focus:ring-primary focus:ring-offset-surface" id="remember" type="checkbox" {{ old('remember') ? 'checked' : '' }}/>
-                            <label class="text-sm text-on-surface-variant cursor-pointer" for="remember">تذكرني</label>
+                    <!-- خيارات التذكر واستعادة الحساب -->
+                    <div class="flex items-center justify-between pt-1">
+                        <div class="flex items-center gap-2.5">
+                            <input name="remember" class="w-4 h-4 bg-slate-950 border-white/10 rounded text-primary focus:ring-primary/30 focus:ring-offset-background transition-all" id="remember" type="checkbox" {{ old('remember') ? 'checked' : '' }}/>
+                            <label class="text-xs font-semibold text-on-surface-variant/95 cursor-pointer select-none" for="remember">تذكرني</label>
                         </div>
-                        <a class="text-sm font-medium text-primary hover:text-primary-fixed-dim transition-colors" href="#">نسيت كلمة المرور؟</a>
+                        <a class="text-xs font-bold text-primary hover:text-primary-fixed-dim transition-colors" href="#">نسيت كلمة المرور؟</a>
                     </div>
 
-                    <button class="w-full bg-gradient-to-br from-primary to-primary-container text-on-primary-fixed font-bold py-4 rounded-xl shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center gap-2 group" type="submit">
-                        <span class="material-symbols-outlined">login</span>
+                    <!-- زر تسجيل الدخول الأساسي المطور -->
+                    <button class="w-full bg-gradient-to-r from-primary to-primary-container text-white font-bold py-3.5 rounded-xl shadow-lg shadow-primary/15 hover:shadow-primary/25 hover:-translate-y-0.5 active:scale-95 transition-all duration-300 flex items-center justify-center gap-2 group mt-6" type="submit">
+                        <span class="material-symbols-outlined text-[20px] transition-transform duration-300 group-hover:translate-x-1">login</span>
                         تسجيل الدخول
                     </button>
                 </form>
 
-                <!-- Social/Other Methods Separator -->
+                <!-- فاصل خيارات التسجيل الأخرى -->
                 <div class="relative py-2">
-                    <div class="absolute inset-0 flex items-center"><span class="w-full border-t border-outline-variant/30"></span></div>
-                    <div class="relative flex justify-center text-xs uppercase"><span class="bg-surface-container-low px-4 text-on-surface-variant font-medium tracking-widest">أو</span></div>
+                    <div class="absolute inset-0 flex items-center"><span class="w-full border-t border-white/5"></span></div>
+                    <div class="relative flex justify-center text-xs uppercase"><span class="bg-[#12141c]/90 px-4 text-on-surface-variant/60 font-semibold tracking-widest">أو</span></div>
                 </div>
 
-                <!-- Registration Link -->
+                <!-- رابط إنشاء حساب جديد -->
                 <div class="text-center">
-                    <p class="text-on-surface-variant text-sm">
+                    <p class="text-on-surface-variant/80 text-xs sm:text-sm">
                         ليس لديك حساب؟
-                        <a class="text-secondary font-bold hover:underline underline-offset-4 transition-all" href="{{ route('register') }}">سجّل الآن</a>
+                        <a class="text-secondary font-extrabold hover:underline underline-offset-4 transition-all" href="{{ route('register') }}">سجّل الآن</a>
                     </p>
                 </div>
             </div>
         </div>
 
-        <!-- Footer Text -->
+        <!-- التذييل والمعلومات السفلى للأنظمة -->
         <footer class="mt-8 flex flex-col items-center gap-4">
             <div class="flex items-center gap-6">
-                <a class="text-xs text-on-surface-variant/60 hover:text-on-surface transition-colors" href="#">سياسة الخصوصية</a>
-                <a class="text-xs text-on-surface-variant/60 hover:text-on-surface transition-colors" href="#">شروط الخدمة</a>
-                <a class="text-xs text-on-surface-variant/60 hover:text-on-surface transition-colors" href="#">الدعم الفني</a>
+                <a class="text-xs text-on-surface-variant/50 hover:text-white transition-colors" href="#">سياسة الخصوصية</a>
+                <a class="text-xs text-on-surface-variant/50 hover:text-white transition-colors" href="#">شروط الخدمة</a>
+                <a class="text-xs text-on-surface-variant/50 hover:text-white transition-colors" href="#">الدعم الفني</a>
             </div>
-            <div class="flex items-center gap-2 bg-surface-container-high/40 px-3 py-1.5 rounded-full border border-outline-variant/10">
-                <span class="w-2 h-2 rounded-full bg-success"></span>
-                <span class="text-[10px] text-on-surface-variant font-medium">الأنظمة تعمل بشكل مثالي</span>
+
+            <div class="flex items-center gap-2.5 bg-slate-900/60 px-4 py-2 rounded-full border border-white/5 shadow-inner">
+                <span class="flex h-2 w-2 relative">
+                    <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-success opacity-75"></span>
+                    <span class="relative inline-flex rounded-full h-2 w-2 bg-success"></span>
+                </span>
+                <span class="text-[10px] text-on-surface-variant/90 font-bold tracking-wide">جميع الأنظمة تعمل بشكل مثالي</span>
             </div>
         </footer>
     </main>
 
-    <!-- Side Decoration (Asymmetric Editorial Feel) -->
-    <div class="hidden lg:block fixed left-12 top-1/2 -translate-y-1/2 max-w-sm">
-        <div class="bg-surface-container/30 backdrop-blur-md p-8 rounded-2xl border border-white/5 space-y-4">
-            <span class="material-symbols-outlined text-tertiary-fixed-dim text-5xl" style="font-variation-settings: 'FILL' 1;">auto_awesome</span>
-            <h2 class="text-2xl font-bold font-headline text-on-surface leading-tight">ابدأ رحلة التعلم المعززة بالذكاء الاصطناعي</h2>
-            <p class="text-on-surface-variant leading-relaxed text-sm">
-                انضم إلى آلاف الطلاب الذين يستخدمون منصة Smart Learn لتسريع عملية التعلم من خلال مسارات تعليمية مخصصة وتقييمات ذكية.
+    <!-- البطاقة الجانبية المبتكرة للشاشات الكبيرة (Desktop Side Card) -->
+    <div class="hidden lg:block fixed left-12 top-1/2 -translate-y-1/2 max-w-sm z-20">
+        <div class="glass-card p-8 rounded-2xl border border-white/10 space-y-5 shadow-2xl relative overflow-hidden transition-all duration-300 hover:border-primary/25">
+            <div class="absolute -top-10 -left-10 w-32 h-32 bg-tertiary-container/5 rounded-full blur-2xl"></div>
+
+            <span class="material-symbols-outlined text-tertiary-fixed-dim text-4xl" style="font-variation-settings: 'FILL' 1;">auto_awesome</span>
+            <h2 class="text-2xl font-bold font-headline text-white leading-snug">رحلة تعلم استثنائية معززة بالذكاء الاصطناعي</h2>
+            <p class="text-on-surface-variant text-xs sm:text-sm leading-relaxed font-normal">
+                انضم إلى آلاف الطلاب الذين يستخدمون منصة Smart Learn لتسريع التحصيل المعرفي وبناء الاختبارات والملخصات التفاعلية الفورية في ثوانٍ.
             </p>
-            <div class="flex -space-x-3 space-x-reverse pt-2">
-                <img class="w-10 h-10 object-cover rounded-full border-2 border-surface" alt="Student" src="https://images.unsplash.com/photo-1531427186611-ecfd6d936c79?q=80&w=150&auto=format&fit=crop"/>
-                <img class="w-10 h-10 object-cover rounded-full border-2 border-surface" alt="Student" src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=150&auto=format&fit=crop"/>
-                <img class="w-10 h-10 object-cover rounded-full border-2 border-surface" alt="Student" src="https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?q=80&w=150&auto=format&fit=crop"/>
-                <div class="w-10 h-10 rounded-full border-2 border-surface bg-surface-container-highest flex items-center justify-center text-[10px] font-bold text-white">+99</div>
+            <div class="flex -space-x-2.5 space-x-reverse pt-2">
+                <img class="w-9 h-9 object-cover rounded-full border-2 border-[#121416]" alt="Student" src="https://images.unsplash.com/photo-1531427186611-ecfd6d936c79?q=80&w=150&auto=format&fit=crop"/>
+                <img class="w-9 h-9 object-cover rounded-full border-2 border-[#121416]" alt="Student" src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=150&auto=format&fit=crop"/>
+                <img class="w-9 h-9 object-cover rounded-full border-2 border-[#121416]" alt="Student" src="https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?q=80&w=150&auto=format&fit=crop"/>
+                <div class="w-9 h-9 rounded-full border-2 border-[#121416] bg-slate-900 flex items-center justify-center text-[10px] font-bold text-white">+99</div>
             </div>
         </div>
     </div>
 
-    <!-- Script to toggle password visibility -->
+    <!-- كود الجافا سكريبت الأصلي للتحكم بظهور كلمة المرور -->
     <script>
         function togglePassword() {
             const passwordInput = document.getElementById('password');
