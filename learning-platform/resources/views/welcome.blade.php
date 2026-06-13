@@ -118,9 +118,7 @@
                 <!-- Visual Side -->
                 <div class="lg:col-span-5 relative">
                     <div class="relative rounded-2xl overflow-hidden glass-panel border border-outline-variant/10 shadow-2xl p-4 rotate-1 lg:rotate-3 scale-105">
-                        <video class="w-full h-auto rounded-xl object-cover" autoplay loop muted playsinline poster="https://lh3.googleusercontent.com/aida-public/AB6AXuDpv104ySkzjVPHjndl_FnVjuiezKf0h5UyLuk3kexfx_DsFyme2hCRIpZFALKvdbzFlPd7kFfEZbwNAeh2mpYdP-1Cw5sYToN9KSVAjb7XeO0eDjnqj2EwquWh3Vube3eMcjvRnJdlg8ONLI4ZURKBa1fy8PhbMvM7ojcdB9IZz8hcVEBZB6XsC0AWrM-TBhFK4KQ1vxYjWx0ZadepvIvIcZe09AheB_2BpLuogxXKdL96D4_9sRy-_ie7KI1pYk1ZQAlUFyM4tDc">
-                            <source src="https://d8j0ntlcm91z4.cloudfront.net/user_38xzZboKViGWJOttwIXH07lWA1P/hf_20260603_132049_036591b8-6e92-4760-b94c-a7ea6eef315c.mp4" type="video/mp4">
-                        </video>
+                        <img class="w-full h-auto rounded-xl" alt="AI Education" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDpv104ySkzjVPHjndl_FnVjuiezKf0h5UyLuk3kexfx_DsFyme2hCRIpZFALKvdbzFlPd7kFfEZbwNAeh2mpYdP-1Cw5sYToN9KSVAjb7XeO0eDjnqj2EwquWh3Vube3eMcjvRnJdlg8ONLI4ZURKBa1fy8PhbMvM7ojcdB9IZz8hcVEBZB6XsC0AWrM-TBhFK4KQ1vxYjWx0ZadepvIvIcZe09AheB_2BpLuogxXKdL96D4_9sRy-_ie7KI1pYk1ZQAlUFyM4tDc"/>
                         <div class="absolute bottom-8 right-8 bg-surface-container-highest/90 p-4 rounded-xl border border-outline-variant/20 backdrop-blur-md">
                             <div class="flex items-center gap-3">
                                 <div class="w-10 h-10 rounded-full bg-pink-500/20 flex items-center justify-center">
