@@ -47,7 +47,10 @@ public function index()
     public function generate(Lecture $lecture)
     {
         $this->authorizeTeacher($lecture);
-        abort_if($lecture->hasQuiz(), 422, 'هذه المحاضرة لديها اختبار بالفعل.');
+
+        if ($lecture->hasQuiz()) {
+            return back()->with('error', 'هذه المحاضرة لديها اختبار بالفعل.');
+        }
 
         $pdfPath = null;
         if ($lecture->file_url && Storage::disk('public')->exists($lecture->file_url)) {
@@ -55,7 +58,9 @@ public function index()
         }
 
         $hasContent = $lecture->content_text || $pdfPath;
-        abort_if(!$hasContent, 422, 'المحاضرة لا تحتوي على محتوى للتحليل (لا نص ولا ملف).');
+        if (!$hasContent) {
+            return back()->with('error', 'المحاضرة لا تحتوي على محتوى للتحليل (لا نص ولا ملف).');
+        }
 
         $generated = $this->ai->generateQuiz($lecture->content_text ?? '', 10, $pdfPath);
 

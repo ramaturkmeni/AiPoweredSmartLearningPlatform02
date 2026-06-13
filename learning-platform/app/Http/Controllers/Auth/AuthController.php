@@ -92,11 +92,12 @@ class AuthController extends Controller
 
     public function logout(Request $request)
     {
-        Auth::logout();
+        Auth::guard('web')->logout();
+        $request->session()->flush();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return redirect()->route('login');
+        return redirect('/login');
     }
 
     public function profile()
@@ -146,6 +147,7 @@ class AuthController extends Controller
 
         $profile->update($data);
 
-        return back()->with('success', 'تم تحديث الملف الشخصي بنجاح ✓');
+        return redirect()->route(auth()->user()->role . '.dashboard')
+                         ->with('success', 'تم تحديث الملف الشخصي بنجاح ✓');
     }
 }

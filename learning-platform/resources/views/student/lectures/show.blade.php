@@ -21,7 +21,7 @@
                 @if($lecture->file_url)
                     <div class="flex flex-row-reverse items-center gap-3 p-4 bg-surface-container-low rounded-xl mb-4">
                         <span class="material-symbols-outlined text-primary text-2xl">description</span>
-                        <a href="{{ Storage::url($lecture->file_url) }}" target="_blank" class="text-primary font-bold text-sm hover:underline">تحميل الملف المرفق</a>
+                        <a href="{{ Storage::disk('public')->url($lecture->file_url) }}" target="_blank" class="text-primary font-bold text-sm hover:underline">تحميل الملف المرفق</a>
                     </div>
                 @endif
 
