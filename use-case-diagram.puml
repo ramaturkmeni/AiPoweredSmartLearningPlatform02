@@ -1,0 +1,108 @@
+@startuml AiPoweredSmartLearningPlatform_UseCase
+left to right direction
+skinparam packageStyle rectangle
+skinparam actorStyle awesome
+title نظام منصة التعلّم الذكية - مخطط حالات الاستخدام (Use Case Diagram)
+
+' ========================= Actors =========================
+actor "الطالب\n(Student)" as Student
+actor "المعلّم\n(Teacher)" as Teacher
+actor "زائر\n(Guest)" as Guest
+actor "خدمة الذكاء الاصطناعي\n(Gemini AI)" as AI
+
+' الوراثة: الطالب والمعلّم مستخدمان مسجّلان
+Guest <|-- Student
+Guest <|-- Teacher
+
+rectangle "منصة التعلّم الذكية" {
+
+  ' ---------- حالات استخدام عامة (المصادقة) ----------
+  usecase "تسجيل حساب جديد" as UC_Register
+  usecase "تسجيل الدخول" as UC_Login
+  usecase "تسجيل الخروج" as UC_Logout
+  usecase "إدارة الملف الشخصي" as UC_Profile
+  usecase "التحقق من الصلاحيات" as UC_Auth
+
+  ' ---------- حالات استخدام المعلّم ----------
+  usecase "إدارة المقررات" as UC_ManageCourses
+  usecase "إدارة المحاضرات" as UC_ManageLectures
+  usecase "رفع ملف PDF للمحاضرة" as UC_UploadPdf
+  usecase "توليد اختبار بالذكاء الاصطناعي" as UC_GenerateQuiz
+  usecase "مراجعة وتعديل الاختبار" as UC_ReviewQuiz
+  usecase "إضافة سؤال يدوياً" as UC_AddQuestion
+  usecase "حذف سؤال" as UC_DeleteQuestion
+  usecase "نشر الاختبار" as UC_PublishQuiz
+  usecase "عرض نتائج الاختبار" as UC_QuizResults
+
+  ' ---------- حالات استخدام الطالب ----------
+  usecase "تصفّح المقررات" as UC_BrowseCourses
+  usecase "الاشتراك في مقرر" as UC_Enroll
+  usecase "الانسحاب من مقرر" as UC_Drop
+  usecase "عرض محتوى المحاضرة" as UC_ViewLecture
+  usecase "تلخيص المحاضرة بالذكاء الاصطناعي" as UC_Summarize
+  usecase "أداء الاختبار" as UC_TakeQuiz
+  usecase "تسليم الاختبار" as UC_SubmitQuiz
+  usecase "تصحيح تلقائي للإجابات" as UC_Grade
+  usecase "عرض نتيجة الاختبار" as UC_ViewResult
+  usecase "عرض محاولاتي السابقة" as UC_MyAttempts
+
+  ' ---------- حالة مشتركة مع الذكاء الاصطناعي ----------
+  usecase "جلسة محادثة ذكية" as UC_AISession
+  usecase "استدعاء واجهة Gemini" as UC_CallAI
+}
+
+' ========================= علاقات الزائر =========================
+Guest --> UC_Register
+Guest --> UC_Login
+
+' ========================= علاقات المعلّم =========================
+Teacher --> UC_ManageCourses
+Teacher --> UC_ManageLectures
+Teacher --> UC_GenerateQuiz
+Teacher --> UC_ReviewQuiz
+Teacher --> UC_PublishQuiz
+Teacher --> UC_QuizResults
+Teacher --> UC_AISession
+Teacher --> UC_Profile
+Teacher --> UC_Logout
+
+' ========================= علاقات الطالب =========================
+Student --> UC_BrowseCourses
+Student --> UC_Enroll
+Student --> UC_ViewLecture
+Student --> UC_Summarize
+Student --> UC_TakeQuiz
+Student --> UC_ViewResult
+Student --> UC_MyAttempts
+Student --> UC_AISession
+Student --> UC_Profile
+Student --> UC_Logout
+
+' ========================= علاقات الذكاء الاصطناعي =========================
+UC_CallAI --> AI
+
+' ========================= Include =========================
+UC_ManageCourses ..> UC_Auth : <<include>>
+UC_ManageLectures ..> UC_Auth : <<include>>
+UC_GenerateQuiz ..> UC_Auth : <<include>>
+UC_PublishQuiz ..> UC_Auth : <<include>>
+UC_BrowseCourses ..> UC_Auth : <<include>>
+UC_TakeQuiz ..> UC_Auth : <<include>>
+UC_AISession ..> UC_Auth : <<include>>
+
+UC_GenerateQuiz ..> UC_CallAI : <<include>>
+UC_Summarize ..> UC_CallAI : <<include>>
+UC_AISession ..> UC_CallAI : <<include>>
+
+UC_SubmitQuiz ..> UC_Grade : <<include>>
+UC_TakeQuiz ..> UC_SubmitQuiz : <<include>>
+
+' ========================= Extend =========================
+UC_UploadPdf ..> UC_ManageLectures : <<extend>>
+UC_AddQuestion ..> UC_ReviewQuiz : <<extend>>
+UC_DeleteQuestion ..> UC_ReviewQuiz : <<extend>>
+UC_GenerateQuiz <.. UC_ReviewQuiz : <<extend>>
+UC_Drop ..> UC_Enroll : <<extend>>
+UC_ViewResult <.. UC_MyAttempts : <<extend>>
+
+@enduml

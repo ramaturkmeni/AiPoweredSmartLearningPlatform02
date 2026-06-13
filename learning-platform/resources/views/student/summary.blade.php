@@ -26,11 +26,11 @@
     </div>
 
     <!-- Summary Card -->
-    <div class="relative bg-surface-container-low border border-primary/20 rounded-[2rem] p-8 md:p-12 shadow-2xl overflow-hidden">
+    <div id="print-area" class="relative bg-surface-container-low border border-primary/20 rounded-[2rem] p-8 md:p-12 shadow-2xl overflow-hidden">
 
         <!-- الزخرفة الخلفية -->
-        <div class="absolute -top-32 -left-32 w-72 h-72 bg-primary/10 rounded-full blur-[80px] pointer-events-none"></div>
-        <div class="absolute -bottom-32 -right-32 w-72 h-72 bg-tertiary/10 rounded-full blur-[80px] pointer-events-none"></div>
+        <div class="no-print absolute -top-32 -left-32 w-72 h-72 bg-primary/10 rounded-full blur-[80px] pointer-events-none"></div>
+        <div class="no-print absolute -bottom-32 -right-32 w-72 h-72 bg-tertiary/10 rounded-full blur-[80px] pointer-events-none"></div>
 
         <!-- محتوى التلخيص -->
         <div class="relative z-10 text-right">
@@ -42,7 +42,7 @@
         </div>
 
         <!-- أدوات سفلية -->
-        <div class="relative z-10 mt-12 pt-6 border-t border-outline-variant/20 flex items-center justify-end gap-4">
+        <div class="no-print relative z-10 mt-12 pt-6 border-t border-outline-variant/20 flex items-center justify-end gap-4">
             <button id="copy-btn" class="text-on-surface-variant hover:text-white flex items-center gap-2 text-sm transition-colors">
                 <span class="font-bold">نسخ النص</span>
                 <span class="material-symbols-outlined text-sm">content_copy</span>
@@ -77,6 +77,32 @@
     .md-content th, .md-content td { border: 1px solid rgba(68,70,84,0.4); padding: 0.5em 0.75em; text-align: right; }
     .md-content th { background: rgba(185,195,255,0.05); color: #e2e2e5; font-weight: 700; }
     .md-content hr { border-color: rgba(68,70,84,0.4); margin: 1.5em 0; }
+
+    /* طباعة الملخص فقط */
+    @media print {
+        body * { visibility: hidden; }
+        #print-area, #print-area * { visibility: visible; }
+        #print-area {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            padding: 0;
+            margin: 0;
+            box-shadow: none;
+            border: none;
+            background: #fff !important;
+        }
+        /* عناصر ما بدنا نطبعها */
+        .no-print { display: none !important; }
+        /* ألوان مناسبة للورق الأبيض */
+        #print-area, #print-area * { color: #000 !important; }
+        #print-area .md-content h1,
+        #print-area .md-content h2,
+        #print-area .md-content h3,
+        #print-area .md-content h4,
+        #print-area .md-content strong { color: #000 !important; }
+    }
 </style>
 @endpush
 
