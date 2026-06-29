@@ -72,6 +72,7 @@ class AIService
 
     protected function call(string $prompt): string
     {
+        set_time_limit(0);
         try {
             $url = $this->baseUrl . $this->model . ':generateContent';
 
@@ -106,6 +107,7 @@ class AIService
 
     protected function callWithPdf(string $prompt, string $pdfPath): string
     {
+        set_time_limit(0);
         try {
             if (!file_exists($pdfPath)) {
                 return 'ملف المحاضرة غير موجود في المسار: ' . basename($pdfPath);
