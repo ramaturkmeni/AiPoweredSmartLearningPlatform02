@@ -46,7 +46,7 @@
                     </div>
 
                     <div class="space-y-3 mr-14">
-                        @foreach($question->options as $oIndex => $option)
+                        @foreach($question->options->shuffle() as $oIndex => $option)
                             <label class="flex flex-row-reverse items-center gap-4 p-4 rounded-xl bg-surface-container-low border border-transparent hover:border-primary/20 cursor-pointer transition-all has-[:checked]:border-primary/40 has-[:checked]:bg-primary/5">
                                 <input type="radio" name="answers[{{ $qIndex }}][option_id]" value="{{ $option->id }}" class="w-5 h-5 text-primary border-outline-variant focus:ring-primary bg-surface-container shrink-0" required/>
                                 <span class="text-on-surface-variant text-sm">{{ $option->option_text }}</span>
