@@ -12,19 +12,49 @@ use Illuminate\Support\Facades\DB;
 
 class QuizController extends Controller
 {
-    public function start(Quiz $quiz)
+   public function start(Quiz $quiz)
     {
         $student = Auth::user()->student;
 
-        abort_if(!$quiz->isPublished(), 403, 'هذا الاختبار غير متاح.');
-        abort_if(
-            !$student->isEnrolledIn($quiz->lecture->course_id),
-            403, 'يجب التسجيل في المادة أولاً.'
-        );
+        // 1. التحقق من حالة النشر والمادة
+        if (!$quiz->isPublished()) {
+            return back()->with('error', 'هذا الاختبار غير متاح حالياً.');
+        }
 
-        $attempt = StudentQuizAttempt::firstOrCreate(
-            ['student_id' => $student->id, 'quiz_id' => $quiz->id, 'status' => 'in_progress'],
-        );
+        if (!$student->isEnrolledIn($quiz->lecture->course_id)) {
+            return back()->with('error', 'يجب التسجيل في المادة أولاً.');
+        }
+
+        // ── 2. التعديل الجديد: التحقق من الحدود الزمنية للاختبار (مهم جداً) ──
+        $now = now();
+
+        // أ) التحقق مما إذا كان وقت البدء لم يحن بعد
+        if ($quiz->start_time && $now->lt(\Carbon\Carbon::parse($quiz->start_time))) {
+            $formattedStart = \Carbon\Carbon::parse($quiz->start_time)->format('Y/m/d H:i');
+            return back()->with('error', 'هذا الاختبار لم يبدأ بعد .. سيبدأ في: ' . $formattedStart);
+        }
+
+        // ب) التحقق مما إذا كان وقت الانتهاء قد مضى وتجاوز الموعد
+        if ($quiz->end_time && $now->gt(\Carbon\Carbon::parse($quiz->end_time))) {
+            return back()->with('error', 'عذراً، انتهى الوقت المخصص لتقديم هذا الاختبار.');
+        }
+
+        // 3. التحقق من المحاولات السابقة والمسلمة
+        $hasSubmitted = \App\Models\StudentQuizAttempt::where('student_id', $student->id)
+            ->where('quiz_id', $quiz->id)
+            ->where('status', 'submitted')
+            ->exists();
+
+        if ($hasSubmitted) {
+            return back()->with('error', 'لقد قمت بتأدية هذا الاختبار مسبقاً ولا يمكنك إعادته.');
+        }
+
+        // 4. جلب أو إنشاء المحاولة (قيد التقدم)
+        $attempt = \App\Models\StudentQuizAttempt::firstOrCreate([
+            'student_id' => $student->id,
+            'quiz_id'    => $quiz->id,
+            'status'     => 'in_progress',
+        ]);
 
         $quiz->load('questions.options');
 
