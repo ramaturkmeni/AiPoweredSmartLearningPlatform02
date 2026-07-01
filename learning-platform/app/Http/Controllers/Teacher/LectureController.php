@@ -36,7 +36,7 @@ class LectureController extends Controller
             'course_id'    => ['required', 'exists:courses,id'],
             'title'        => ['required', 'string', 'max:255'],
             'content_text' => ['nullable', 'string'],
-            'file'         => ['nullable', 'file', 'mimes:pdf,doc,docx', 'max:20480'],
+            'file'         => ['nullable', 'file', 'mimes:pdf,doc,docx,ppt,pptx', 'max:20480'],
             'video_url'    => ['nullable', 'url'],
             'image'        => ['nullable', 'image', 'max:2048'],
             'order_index'  => ['nullable', 'integer', 'min:0'],
