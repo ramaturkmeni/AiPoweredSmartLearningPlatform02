@@ -44,10 +44,10 @@
                         <a href="{{ route('teacher.courses.edit', $course) }}" class="flex-1 text-center bg-surface-variant text-on-surface py-2 rounded-xl text-sm font-bold hover:bg-secondary hover:text-on-secondary transition-all">
                             تعديل
                         </a>
-                        <form method="POST" action="{{ route('teacher.courses.destroy', $course) }}" class="flex-1">
+                            <form method="POST" action="{{ route('teacher.courses.destroy', $course) }}" class="flex-1">
                             @csrf
                             @method('DELETE')
-                            <button type="submit" class="w-full bg-error-container text-on-error-container py-2 rounded-xl text-sm font-bold hover:opacity-80 transition-all" onclick="return confirm('هل أنت متأكد من حذف هذه المادة؟')">
+                            <button type="button" onclick="confirmDeleteCourse(this)" class="w-full bg-error-container text-on-error-container py-2 rounded-xl text-sm font-bold hover:opacity-80 transition-all">
                                 حذف
                             </button>
                         </form>
@@ -69,4 +69,43 @@
             </a>
         </div>
     @endif
+
+    <!-- نافذة التأكيد المنسدلة من الأعلى المخصصة لحذف المادة من قبل الأستاذ -->
+<div id="confirm-delete-course-modal" class="fixed inset-0 z-[100] hidden flex items-start justify-center pt-24 bg-black/60 backdrop-blur-sm transition-all duration-300">
+    <div class="bg-surface-container-high border border-outline-variant/30 p-6 rounded-2xl max-w-sm w-full mx-4 shadow-2xl text-right animate-fade-in">
+        <div class="flex items-center gap-3 flex-row-reverse mb-4">
+            <span class="material-symbols-outlined text-error" style="font-variation-settings: 'FILL' 1;">warning</span>
+            <h4 class="text-white font-bold text-lg">تأكيد حذف المادة نهائياً</h4>
+        </div>
+        <p class="text-on-surface-variant text-sm mb-6 leading-relaxed">هل أنت متأكد من رغبتك في حذف هذه المادة الدراسية؟ <br> تنبيه: سيتم حذف جميع المحاضرات والاختبارات التابعة لهذه المادة نهائياً.</p>
+        <div class="flex gap-3 justify-end flex-row-reverse">
+            <button id="modal-course-delete-submit-btn" class="bg-error text-white font-black px-5 py-2.5 rounded-xl text-sm hover:opacity-90 transition-all">نعم، حذف نهائي</button>
+            <button type="button" onclick="closeDeleteCourseModal()" class="bg-surface-container-low text-on-surface-variant border border-outline-variant/30 px-5 py-2.5 rounded-xl text-sm hover:bg-surface-variant transition-all">تراجع</button>
+        </div>
+    </div>
+</div>
 @endsection
+
+@push('scripts')
+<script>
+    let activeCourseDeleteForm = null;
+
+    function confirmDeleteCourse(button) {
+        activeCourseDeleteForm = button.closest('form');
+        const modal = document.getElementById('confirm-delete-course-modal');
+        modal.classList.remove('hidden');
+    }
+
+    function closeDeleteCourseModal() {
+        const modal = document.getElementById('confirm-delete-course-modal');
+        modal.classList.add('hidden');
+        activeCourseDeleteForm = null;
+    }
+
+    document.getElementById('modal-course-delete-submit-btn').addEventListener('click', function() {
+        if (activeCourseDeleteForm) {
+            activeCourseDeleteForm.submit();
+        }
+    });
+</script>
+@endpush

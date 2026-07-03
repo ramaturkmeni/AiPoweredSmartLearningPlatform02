@@ -53,13 +53,13 @@
                                 <a href="{{ route('teacher.lectures.edit', $lecture) }}" class="text-primary hover:bg-primary/10 p-2 rounded-lg transition-all" title="تعديل">
                                     <span class="material-symbols-outlined text-lg">edit</span>
                                 </a>
-                                <form method="POST" action="{{ route('teacher.lectures.destroy', $lecture) }}" class="inline">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" class="text-error hover:bg-error/10 p-2 rounded-lg transition-all" title="حذف" onclick="return confirm('هل أنت متأكد من حذف هذه المحاضرة؟')">
-                                        <span class="material-symbols-outlined text-lg">delete</span>
-                                    </button>
-                                </form>
+                               <form method="POST" action="{{ route('teacher.lectures.destroy', $lecture) }}" class="inline">
+                                @csrf
+                                @method('DELETE')
+                                <button type="button" onclick="confirmDeleteLecture(this)" class="text-error hover:bg-error/10 p-2 rounded-lg transition-all" title="حذف">
+                                    <span class="material-symbols-outlined text-lg">delete</span>
+                                </button>
+                            </form>
                             </div>
                         </td>
                     </tr>
@@ -81,4 +81,42 @@
             العودة إلى المواد الدراسية
         </a>
     </div>
+    <!-- نافذة التأكيد المنسدلة من الأعلى المخصصة لحذف المحاضرة من قبل الأستاذ -->
+<div id="confirm-delete-lecture-modal" class="fixed inset-0 z-[100] hidden flex items-start justify-center pt-24 bg-black/60 backdrop-blur-sm transition-all duration-300">
+    <div class="bg-surface-container-high border border-outline-variant/30 p-6 rounded-2xl max-w-sm w-full mx-4 shadow-2xl text-right animate-fade-in">
+        <div class="flex items-center gap-3 flex-row-reverse mb-4">
+            <span class="material-symbols-outlined text-error" style="font-variation-settings: 'FILL' 1;">warning</span>
+            <h4 class="text-white font-bold text-lg">تأكيد حذف المحاضرة</h4>
+        </div>
+        <p class="text-on-surface-variant text-sm mb-6 leading-relaxed">هل أنت متأكد من رغبتك في حذف هذه المحاضرة؟ <br> تنبيه: سيتم حذف جميع الملفات والوسائط والاختبارات التابعة لهذه المحاضرة نهائياً.</p>
+        <div class="flex gap-3 justify-end flex-row-reverse">
+            <button id="modal-lecture-delete-submit-btn" class="bg-error text-white font-black px-5 py-2.5 rounded-xl text-sm hover:opacity-90 transition-all">نعم، حذف نهائي</button>
+            <button type="button" onclick="closeDeleteLectureModal()" class="bg-surface-container-low text-on-surface-variant border border-outline-variant/30 px-5 py-2.5 rounded-xl text-sm hover:bg-surface-variant transition-all">تراجع</button>
+        </div>
+    </div>
+</div>
 @endsection
+
+@push('scripts')
+<script>
+    let activeLectureDeleteForm = null;
+
+    function confirmDeleteLecture(button) {
+        activeLectureDeleteForm = button.closest('form');
+        const modal = document.getElementById('confirm-delete-lecture-modal');
+        modal.classList.remove('hidden');
+    }
+
+    function closeDeleteLectureModal() {
+        const modal = document.getElementById('confirm-delete-lecture-modal');
+        modal.classList.add('hidden');
+        activeLectureDeleteForm = null;
+    }
+
+    document.getElementById('modal-lecture-delete-submit-btn').addEventListener('click', function() {
+        if (activeLectureDeleteForm) {
+            activeLectureDeleteForm.submit();
+        }
+    });
+</script>
+@endpush
