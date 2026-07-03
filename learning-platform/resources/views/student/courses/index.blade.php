@@ -45,12 +45,19 @@
                             <a href="{{ route('student.courses.show', $course) }}" class="flex-1 text-center bg-primary/10 text-primary font-bold py-3 rounded-xl hover:bg-primary/20 transition-all text-sm">
                                 عرض المادة
                             </a>
-                            <form method="POST" action="{{ route('student.courses.drop', $course) }}" class="flex-1">
+                            {{-- <form method="POST" action="{{ route('student.courses.drop', $course) }}" class="flex-1">
                                 @csrf
                                 <button type="submit" class="w-full bg-error/10 text-error font-bold py-3 rounded-xl hover:bg-error/20 transition-all text-sm"
                                         onclick="return confirm('هل أنت متأكد من إلغاء التسجيل؟')">
                                     إلغاء التسجيل
                                 </button>
+                            </form> --}}
+                            <form method="POST" action="{{ route('student.courses.drop', $course) }}" class="flex-1">
+                            @csrf
+                            <!-- قمنا بتغيير نوع الزر إلى button واستدعاء دالة جافا سكريبت المخصصة -->
+                            <button type="button" onclick="confirmDrop(this)" class="w-full bg-error/10 text-error font-bold py-3 rounded-xl hover:bg-error/20 transition-all text-sm">
+                                إلغاء التسجيل
+                            </button>
                             </form>
                         </div>
                     @else
@@ -75,4 +82,48 @@
     <div class="mt-8">
         {{ $courses->withQueryString()->links() }}
     </div>
+
+
+
+    <!-- نافذة التأكيد المنسدلة من الأعلى المخصصة للانسحاب -->
+<div id="confirm-drop-modal" class="fixed inset-0 z-[100] hidden flex items-start justify-center pt-24 bg-black/60 backdrop-blur-sm transition-all duration-300">
+    <div class="bg-surface-container-high border border-outline-variant/30 p-6 rounded-2xl max-w-sm w-full mx-4 shadow-2xl text-right animate-fade-in">
+        <div class="flex items-center gap-3 flex-row-reverse mb-4">
+            <span class="material-symbols-outlined text-error" style="font-variation-settings: 'FILL' 1;">warning</span>
+            <h4 class="text-white font-bold text-lg">تأكيد إلغاء التسجيل</h4>
+        </div>
+        <p class="text-on-surface-variant text-sm mb-6 leading-relaxed">هل أنت متأكد من رغبتك في إلغاء تسجيلك في هذه المادة الدراسية؟</p>
+        <div class="flex gap-3 justify-end flex-row-reverse">
+            <button id="modal-submit-btn" class="bg-error text-white font-black px-5 py-2.5 rounded-xl text-sm hover:opacity-90 transition-all">نعم، إلغاء</button>
+            <button type="button" onclick="closeDropModal()" class="bg-surface-container-low text-on-surface-variant border border-outline-variant/30 px-5 py-2.5 rounded-xl text-sm hover:bg-surface-variant transition-all">تراجع</button>
+        </div>
+    </div>
+</div>
 @endsection
+
+@push('scripts')
+<script>
+    let activeDropForm = null;
+
+    // فتح نافذة التأكيد وحفظ الفورم المطلوب حذفه
+    function confirmDrop(button) {
+        activeDropForm = button.closest('form');
+        const modal = document.getElementById('confirm-drop-modal');
+        modal.classList.remove('hidden');
+    }
+
+    // إغلاق نافذة التأكيد
+    function closeDropModal() {
+        const modal = document.getElementById('confirm-drop-modal');
+        modal.classList.add('hidden');
+        activeDropForm = null;
+    }
+
+    // تنفيذ الحذف الفعلي عند الضغط على "نعم، إلغاء"
+    document.getElementById('modal-submit-btn').addEventListener('click', function() {
+        if (activeDropForm) {
+            activeDropForm.submit();
+        }
+    });
+</script>
+@endpush

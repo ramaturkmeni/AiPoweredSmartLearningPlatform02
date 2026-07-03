@@ -22,7 +22,12 @@ class CourseController extends Controller
                          )
                          ->paginate(12);
 
-        $enrolledIds = $student->enrollments()->pluck('course_id')->toArray();
+        // $enrolledIds = $student->enrollments()->pluck('course_id')->toArray();
+        // جلب معرفات المواد المسجلة "النشطة فقط" وتجاهل المواد الملغاة
+            $enrolledIds = $student->enrollments()
+                                ->where('status', 'active') // التعديل الجديد هنا
+                                ->pluck('course_id')
+                                ->toArray();
 
         return view('student.courses.index', compact('courses', 'enrolledIds'));
     }
@@ -34,11 +39,21 @@ class CourseController extends Controller
 
         abort_if($student->isEnrolledIn($course->id), 422, 'أنت مسجّل في هذه المادة بالفعل.');
 
-        CourseEnrollment::create([
-            'student_id' => $student->id,
-            'course_id'  => $course->id,
-            'status'     => 'active',
-        ]);
+        // CourseEnrollment::create([
+        //     'student_id' => $student->id,
+        //     'course_id'  => $course->id,
+        //     'status'     => 'active',
+        // ]);
+        // البحث عن السجل القديم لتحديث حالته، أو إنشاء سجل جديد في حال عدم وجوده
+            CourseEnrollment::updateOrCreate(
+                [
+                    'student_id' => $student->id,
+                    'course_id'  => $course->id
+                ],
+                [
+                    'status'     => 'active'
+                ]
+            );
 
         return back()->with('success', "تم تسجيلك في مادة {$course->title} بنجاح ✓");
     }
