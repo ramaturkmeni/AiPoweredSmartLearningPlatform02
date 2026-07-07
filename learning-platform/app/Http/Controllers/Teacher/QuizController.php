@@ -16,7 +16,7 @@ use Illuminate\Support\Facades\Storage;
 class QuizController extends Controller
 {
     // جلب جميع الاختبارات الخاصة بالأستاذ لرؤية نتائجها
-public function index()
+    public function index()
 {
     $teacher = Auth::user()->teacher;
 
@@ -30,14 +30,6 @@ public function index()
 
     return view('teacher.quizzes.index', compact('quizzes'));
 }
-
-
-
-
-
-
-
-
 
 
 
@@ -126,15 +118,34 @@ public function index()
     }
 
     // ── Publish Quiz ─────────────────────────────
+
     public function publish(Quiz $quiz)
     {
         $this->authorizeQuiz($quiz);
 
         abort_if($quiz->questions()->count() === 0, 422, 'لا يمكن نشر اختبار بدون أسئلة.');
 
+        // 1. تغيير حالة الاختبار إلى منشور للعامة
         $quiz->publish();
 
-        return back()->with('success', 'تم نشر الاختبار بنجاح 🚀');
+        // 2. جلب طالب واحد مسجل بنشاط فقط (كافٍ تماماً للعرض التجريبي وتجنب قيود الحظر)
+        $activeEnrollments = \App\Models\CourseEnrollment::where('course_id', $quiz->lecture->course_id)
+            ->where('status', 'active')
+            ->with('student')
+            ->take(1) // تحديد طالب واحد فقط لضمان استقرار العرض
+            ->get();
+
+        // 3. إرسال الإيميل للطالب المحدد (تمرير كائن الاختبار فقط)
+        foreach ($activeEnrollments as $enrollment) {
+            $student = $enrollment->student;
+            if ($student && $student->email) {
+                \Illuminate\Support\Facades\Mail::to($student->email)->send(
+                    new \App\Mail\NewQuizPublished($quiz)
+                );
+            }
+        }
+
+        return back()->with('success', 'تم نشر الاختبار بنجاح وإشعار الطلاب المسجلين عبر البريد الإلكتروني! 🚀');
     }
 
     // ── Destroy Quiz ─────────────────────────────
