@@ -150,11 +150,12 @@
             </div>
             <p class="text-on-surface-variant text-sm mb-6 text-right">بعد النشر سيتمكن الطلاب من أداء الاختبار. تأكد من مراجعة جميع الأسئلة والإعدادات.</p>
             <form method="POST" action="{{ route('teacher.quizzes.publish', $quiz) }}">
-                @csrf
-                <button type="submit" class="w-full bg-success text-white px-6 py-3 rounded-xl font-bold text-sm hover:opacity-90 transition-all flex items-center justify-center gap-2" onclick="return confirm('هل أنت متأكد من نشر الاختبار؟ لن يمكنك تعديل الأسئلة بعد النشر.')">
-                    <span class="material-symbols-outlined text-lg">publish</span>
-                    نشر الاختبار
-                </button>
+             @csrf
+         <!-- قمنا بتغيير نوع الزر إلى button واستدعاء دالة التأكيد المخصصة للنشر -->
+              <button type="button" onclick="confirmPublish(this)" class="w-full bg-success text-white px-6 py-3 rounded-xl font-bold text-sm hover:opacity-90 transition-all flex items-center justify-center gap-2">
+              <span class="material-symbols-outlined text-lg">publish</span>
+               نشر الاختبار
+            </button>
             </form>
         </div>
 
@@ -168,4 +169,45 @@
         </form>
     </div>
 </div>
+<!-- نافذة التأكيد المنسدلة من الأعلى المخصصة لنشر الاختبار من قبل الأستاذ -->
+<div id="confirm-publish-modal" class="fixed inset-0 z-[100] hidden flex items-start justify-center pt-24 bg-black/60 backdrop-blur-sm transition-all duration-300">
+    <div class="bg-surface-container-high border border-outline-variant/30 p-6 rounded-2xl max-w-sm w-full mx-4 shadow-2xl text-right animate-fade-in">
+        <div class="flex items-center gap-3 flex-row-reverse mb-4">
+            <span class="material-symbols-outlined text-success" style="font-variation-settings: 'FILL' 1;">rocket_launch</span>
+            <h4 class="text-white font-bold text-lg">تأكيد نشر الاختبار</h4>
+        </div>
+        <p class="text-on-surface-variant text-sm mb-6 leading-relaxed">هل أنت متأكد من رغبتك في نشر هذا الاختبار للطلاب؟ <br> <span class="text-success font-bold">تنبيه:</span> بمجرد النشر، سيتم إتاحته للطلاب فوراً ولن تتمكن من تعديل أو حذف الأسئلة.</p>
+        <div class="flex gap-3 justify-end flex-row-reverse">
+            <button id="modal-publish-submit-btn" class="bg-success text-white font-black px-5 py-2.5 rounded-xl text-sm hover:opacity-90 transition-all">نعم، نشر الآن</button>
+            <button type="button" onclick="closePublishModal()" class="bg-surface-container-low text-on-surface-variant border border-outline-variant/30 px-5 py-2.5 rounded-xl text-sm hover:bg-surface-variant transition-all">تراجع</button>
+        </div>
+    </div>
+</div>
 @endsection
+
+@push('scripts')
+<script>
+    let activePublishForm = null;
+
+    // فتح نافذة تأكيد النشر للأستاذ وحفظ الفورم المعني
+    function confirmPublish(button) {
+        activePublishForm = button.closest('form');
+        const modal = document.getElementById('confirm-publish-modal');
+        modal.classList.remove('hidden');
+    }
+
+    // إغلاق نافذة تأكيد النشر
+    function closePublishModal() {
+        const modal = document.getElementById('confirm-publish-modal');
+        modal.classList.add('hidden');
+        activePublishForm = null;
+    }
+
+    // تنفيذ النشر الفعلي بعد موافقة الأستاذ
+    document.getElementById('modal-publish-submit-btn').addEventListener('click', function() {
+        if (activePublishForm) {
+            activePublishForm.submit();
+        }
+    });
+</script>
+@endpush
